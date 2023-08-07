@@ -25,7 +25,8 @@ if [ "$KEY_SIZE" -lt 33 ]; then
     exit 1
 fi
 
-sudo adduser "${USER}" --disabled-password
+# gecos non-interactive 
+sudo adduser "${USER}" --disabled-password --gecos ""
 sudo su - "${USER}"
 mkdir .ssh
 chmod 700 .ssh
