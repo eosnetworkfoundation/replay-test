@@ -35,7 +35,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 "${SCRIPT_DIR}"/adduser.sh "${PUBLIC_KEY}"
 
 
-
 ## enf-replay user setup ##
 sudo su - enf-replay
 "${SCRIPT_DIR}"/installnodeos.sh "${SCRIPT_DIR}"/../config/config.ini
+exit
