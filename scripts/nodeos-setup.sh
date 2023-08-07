@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 PUBLIC_KEY="${1}"
-OS="unbuntu22.04"
+OS="ubuntu22.04"
 LEAP_VERSION="4.0.4"
 DEB_FILE="leap_""${LEAP_VERSION}"-"${OS}""_amd64.deb"
 DEB_URL="https://github.com/AntelopeIO/leap/releases/download/v""${LEAP_VERSION}"/"${DEB_FILE}"
