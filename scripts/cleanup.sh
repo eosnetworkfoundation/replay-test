@@ -25,6 +25,7 @@ dpkg -r leap
 
 # clean out directory
 rm -rf /home/"${USER:?}"/*
+rm -rf /home/"${USER:?}"/.*
 
 # remove user
 sudo deluser "${USER:?}"
