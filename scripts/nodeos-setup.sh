@@ -37,4 +37,4 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 
 ## enf-replay user setup ##
-sudo -u "${USER}" "${SCRIPT_DIR}"/installnodeos.sh "${SCRIPT_DIR}"/../config/config.ini
+sudo -i -u "${USER}" "${SCRIPT_DIR}"/installnodeos.sh "${SCRIPT_DIR}"/../config/config.ini
