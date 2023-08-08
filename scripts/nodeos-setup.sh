@@ -37,5 +37,12 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 
 ## enf-replay user setup ##
-sudo -i -u "${USER}" cp "${SCRIPT_DIR}"/installnodeos.sh ~/
-sudo -i -u "${USER}" ~/installnodeos.sh "${SCRIPT_DIR}"/../config/config.ini
+# copy scripts and config to location
+for dir in scripts config
+do
+  [ ! -d /tmp/replay-${dir} ] && rm -rf /tmp/replay-${dir}
+  mkdir -m 777 /tmp/replay-${dir}
+  cp "${SCRIPT_DIR}"/../${dir}/*.sh /tmp/replay-${dir}/
+  sudo -i -u "${USER}" cp -r /tmp/replay-${dir} /home/"${USER}"/
+done
+sudo -i -u "${USER}" /home/"${USER}"/replay-scripts/installnodeos.sh /home/"${USER}"/replay-config/config.ini
