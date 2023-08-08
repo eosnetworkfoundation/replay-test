@@ -40,7 +40,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # copy scripts and config to location
 for dir in scripts config
 do
-  [ ! -d /tmp/replay-${dir} ] && rm -rf /tmp/replay-${dir}
+  [ -d /tmp/replay-${dir} ] && rm -rf /tmp/replay-${dir}
   mkdir -m 777 /tmp/replay-${dir}
   cp "${SCRIPT_DIR}"/../${dir}/*.* /tmp/replay-${dir}/
   sudo -i -u "${USER}" cp -r /tmp/replay-${dir} /home/"${USER}"/
