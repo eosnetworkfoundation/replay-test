@@ -27,7 +27,8 @@ fi
 
 # gecos non-interactive
 sudo adduser "${USER}" --disabled-password --gecos ""
-sudo -i -u "${USER}" mkdir .ssh && chmod 700 .ssh \
-  && touch .ssh/authorized_keys \
-  && chmod 600 .ssh/authorized_keys \
-  && echo "$PUBLIC_KEY" >> .ssh/authorized_keys
+sudo -i -u "${USER}" mkdir .ssh
+sudo -i -u "${USER}" chmod 700 .ssh
+sudo -i -u "${USER}" touch .ssh/authorized_keys
+sudo -i -u "${USER}" chmod 600 .ssh/authorized_keys
+echo "$PUBLIC_KEY" | sudo -i -u "${USER}" tee -a .ssh/authorized_keys
