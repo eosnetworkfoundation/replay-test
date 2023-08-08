@@ -5,6 +5,7 @@ OS="ubuntu22.04"
 LEAP_VERSION="4.0.4"
 DEB_FILE="leap_""${LEAP_VERSION}"-"${OS}""_amd64.deb"
 DEB_URL="https://github.com/AntelopeIO/leap/releases/download/v""${LEAP_VERSION}"/"${DEB_FILE}"
+USER="enf-replay"
 
 TUID=$(id -ur)
 # must be root to run
@@ -36,6 +37,4 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 
 ## enf-replay user setup ##
-sudo su - enf-replay
-"${SCRIPT_DIR}"/installnodeos.sh "${SCRIPT_DIR}"/../config/config.ini
-exit
+sudo -u "${USER}" "${SCRIPT_DIR}"/installnodeos.sh "${SCRIPT_DIR}"/../config/config.ini

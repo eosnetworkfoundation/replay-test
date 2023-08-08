@@ -25,11 +25,9 @@ if [ "$KEY_SIZE" -lt 33 ]; then
     exit 1
 fi
 
-# gecos non-interactive 
+# gecos non-interactive
 sudo adduser "${USER}" --disabled-password --gecos ""
-sudo su - "${USER}"
-mkdir .ssh
-chmod 700 .ssh
-touch .ssh/authorized_keys
-chmod 600 .ssh/authorized_keys
-echo "$PUBLIC_KEY" >> .ssh/authorized_keys
+sudo -u "${USER}" mkdir .ssh && chmod 700 .ssh \
+  && touch .ssh/authorized_keys \
+  && chmod 600 .ssh/authorized_keys \
+  && echo "$PUBLIC_KEY" >> .ssh/authorized_keys
