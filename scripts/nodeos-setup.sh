@@ -14,6 +14,15 @@ if [ "$TUID" -ne 0 ]; then
   exit
 fi
 
+## packages ##
+apt update >> /dev/null
+apt install unzip
+
+## aws cli ##
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install
+
 ## root setup ##
 # clean out un-needed files
 for not_needed_deb_file in /tmp/leap_[0-9]*.deb
