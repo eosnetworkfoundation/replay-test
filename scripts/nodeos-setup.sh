@@ -54,4 +54,4 @@ do
   cp "${SCRIPT_DIR}"/../${dir}/*.* /tmp/replay-${dir}/
   sudo -i -u "${USER}" cp -r /tmp/replay-${dir} /home/"${USER}"/
 done
-sudo -i -u "${USER}" /home/"${USER}"/replay-scripts/installnodeos.sh /home/"${USER}"/replay-config/config.ini
+sudo -i -u "${USER}" /home/"${USER}"/replay-scripts/create-nodeos-dir-struct.sh /home/"${USER}"/replay-config/config.ini
