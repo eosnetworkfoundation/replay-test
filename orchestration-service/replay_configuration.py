@@ -2,8 +2,6 @@
 import json
 """Module provides printing to stderr."""
 import sys
-"""Module provides execution of shell commands ."""
-import subprocess
 """Module provides os file name and base path."""
 import os
 
@@ -15,34 +13,28 @@ import os
 # `expected_integrity_hash` at end of block
 # `nodeos_version` Maj.Min.Patch-rcN or Maj.Min.Patch-commithash
 class BlockManager:
-    def __init__(self, block_record):
+    def __init__(self, block_record, pk):
         self.start_block_id = int(block_record['start_block_id'])
         self.end_block_id = int(block_record['end_block_id'])
         self.snapshot_path = block_record['snapshot_path']
         self.storage_type = block_record['storage_type']
         self.expected_integrity_hash = block_record['expected_integrity_hash']
-        self.nodeos_version = block_record['nodeos_version']
+        self.leap_version = block_record['leap_version']
+        self.block_record_id = pk
 
-    def download_snapshot(self):
+    def get_snapshot_path(self):
         if not self._is_supported_storage_type():
             raise ValueError("Error BM001: storage type {self.storage_type} not supported")
-        if self.storage_type == "s3":
-            try:
-                subprocess.check_call(["aws", "s3", "cp", self.snapshot_path, "~/snapshot/"])
-            except subprocess.CalledProcessError:
-                raise Exception("Error BM003 copy from s3 failed")
-            return "~/snapshot/" + os.path.basename(self.snapshot_path)
-
-        if self.storage_type in ["fs","filesystem"]:
-            return self.snapshot_path
+        return self.snapshot_path
 
     def _is_supported_storage_type(self):
         return self.storage_type in ["s3","filesystem","fs"]
 
-    def download_nodeos(self):
-        # Similarly, use appropriate method to download the nodeos version.
-        # For the purpose of this example, we're just printing a message.
-        print(f"Downloading nodeos version: {self.nodeos_version}")
+    def get_leap_deb_url(self):
+        os="ubuntu22.04"
+        repo="AntelopeIO/leap"
+        service="github.com"
+        return f"https://{service}/{repo}/releases/download/v{self.leap_version}/leap_{self.leap_version}-{os}_amd64.deb"
 
     def validate_integrity_hash(self, computed_integrity_hash):
         return computed_integrity_hash == self.expected_integrity_hash
@@ -54,8 +46,11 @@ class ReplayManager:
         self.records = []
         if len(records) < 1:
             print(f"Error RM001 tried to load empty jobs file ", file=sys.stderr)
+        # init the pk
+        generated_id = 1
         for block in records:
-            self.records.append(BlockManager(block))
+            self.records.append(BlockManager(block, generated_id))
+            generated_id += 1
 
     def return_record_by_start_block_id(self, start_block_id):
         for record in self.records:

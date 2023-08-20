@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 
-BRANCH="ehp/gh-3-aws-setup"
-
 # update
 apt update
 # get the scripts
 if [ -n "$BRANCH" ]; then
-  git clone -b ehp/gh-3-aws-setup https://github.com/eosnetworkfoundation/replay-test
+  git clone -b "$BRANCH" https://github.com/eosnetworkfoundation/replay-test
 else
   git clone https://github.com/eosnetworkfoundation/replay-test
 fi
