@@ -3,19 +3,28 @@ import pytest
 """Module provides loading of config file in json format."""
 import json
 """Module provides marshling replay records."""
-from replay_configuration import ReplayManager
+from replay_configuration import ReplayConfigManager
 """Module provides building config for replay node from json meta-data."""
-from replay_configuration import BlockManager
+from replay_configuration import BlockConfigManager
 
+#### Replay Manager ####
 def test_initialize_replay_manager():
-    manager = ReplayManager('../../meta-data/test-simple-jobs.json')
+    manager = ReplayConfigManager('../../meta-data/test-simple-jobs.json')
     assert manager is not None
 
+def test_get_by_pk():
+    manager = ReplayConfigManager('../../meta-data/test-simple-jobs.json')
+    pk = 1
+    block = manager.get(pk)
+    assert block is not None
+    assert block.replay_slice_id == pk
+
+#### Bloci Manger ####
 def test_initialize_block_manager_ok_with_s3():
     with open('../../meta-data/test-001-jobs.json', 'r') as f:
         records = json.load(f)
     primary_key = 1
-    block = BlockManager(records[0],primary_key)
+    block = BlockConfigManager(records[0],primary_key)
     assert block is not None
     assert block._is_supported_storage_type() is True
     assert block.get_leap_deb_url().startswith("https://github.com/AntelopeIO/leap/releases/download/v")
@@ -25,7 +34,7 @@ def test_initialize_block_manager_ok_with_fs():
     with open('../../meta-data/test-001-jobs.json', 'r') as f:
         records = json.load(f)
     primary_key = 2
-    block = BlockManager(records[1],primary_key)
+    block = BlockConfigManager(records[1],primary_key)
     assert block is not None
     assert block._is_supported_storage_type() is True
     assert block.get_snapshot_path() == records[1]["snapshot_path"]
@@ -36,4 +45,4 @@ def test_initialize_block_manager_bad_record():
         records = json.load(f)
     primary_key = 3
     with pytest.raises(KeyError):
-        block = BlockManager(records[2], primary_key)
+        block = BlockConfigManager(records[2], primary_key)
