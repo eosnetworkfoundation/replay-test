@@ -47,6 +47,17 @@ class BlockConfigManager:
         """returns bool compared hash in config (expected) to computed_integrity_hash (actual)"""
         return computed_integrity_hash == self.expected_integrity_hash
 
+    def to_json_str(self):
+        """formats object to string representing json"""
+        return f"""    {{
+        'start_block_id': {self.start_block_id},
+        'end_block_id': {self.end_block_id},
+        'snapshot_path': '{self.snapshot_path}',
+        'storage_type': '{self.storage_type}',
+        'expected_integrity_hash': '{self.expected_integrity_hash}',
+        'leap_version': '{self.leap_version}
+    }}"""
+
 class ReplayConfigManager:
     """
     Read only class to access configuration records for a replay
@@ -60,6 +71,8 @@ class ReplayConfigManager:
             records = json.load(jobs_config_file)
         self.records = []
         self.current = 0
+        # preserve path to dump after changes
+        self.config_path = json_file_path
         if len(records) < 1:
             print("Error RM001 tried to load empty jobs file ", file=sys.stderr)
         # init the pk
@@ -78,12 +91,27 @@ class ReplayConfigManager:
         self.current += 1
         return self.records[self.current-1]
 
+    def persist(self):
+        """persist records back to config file, overwriting exiting"""
+        with open(self.config_path, 'w',  encoding='utf-8') as file:
+            file.write(self.to_json_str())
+
     def get(self, primary_key):
         """get a record by id, pk is unique returns only one"""
         for record in self.records:
             if record.replay_slice_id == primary_key:
                 return record
         return None
+
+    def set(self, block_config):
+        """update the block configuration, return if match found"""
+        primary_key = block_config.replay_slice_id
+        # make the update
+        for index, record in enumerate(self.records):
+            if record.replay_slice_id == primary_key:
+                self.records[index] = block_config
+                return True
+        return False
 
     def return_record_by_start_block_id(self, start_block_id):
         """get FIRST record by start block num"""
@@ -98,3 +126,14 @@ class ReplayConfigManager:
             if record.end_block_id == end_block_id:
                 return record
         return None
+
+    def to_json_str(self):
+        """convert to json"""
+        # start array
+        this_json = "["
+        for record in self.records:
+            this_json = this_json + "\n" + record.to_json_str() + ","
+        # chop off the last common
+        # end array
+        this_json = this_json[:-1] + "\n]\n"
+        return this_json
