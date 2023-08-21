@@ -61,6 +61,10 @@ class JobManager:
         """Return job by id"""
         return self.jobs.get(job_id)
 
+    def get_all(self):
+        """Return all jobs"""
+        return self.jobs
+
     # pylint: disable=unnecessary-pass
     def set_job(self, job):
         """no op hook for future data persistance"""
