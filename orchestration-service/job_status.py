@@ -1,4 +1,5 @@
 """Module provides now and job status"""
+import json
 from datetime import datetime
 from enum import Enum
 
@@ -11,6 +12,22 @@ class JobStatusEnum(Enum):
     FINISHED = "finished"
     ERROR = "error"
     TIMEOUT = "timeout"
+
+    @staticmethod
+    def lookup_by_name(name):
+        """return correct value give a str repr of Enum"""
+        if name == "WAITING_4_WORKER":
+            return JobStatusEnum.WAITING_4_WORKER
+        if name == "STARTED":
+            return JobStatusEnum.STARTED
+        if name == "WORKING":
+            return JobStatusEnum.WORKING
+        if name == "ERROR":
+            return JobStatusEnum.ERROR
+        if name == "TIMEOUT":
+            return JobStatusEnum.TIMEOUT
+        # default value
+        return JobStatusEnum.ERROR
 
 class JobStatus:
     """
@@ -35,17 +52,44 @@ class JobStatus:
         self.slice_config = config
         self.status = JobStatusEnum.WAITING_4_WORKER
         self.last_block_processed = 0
-        self.start_time = datetime.now()
+        self.start_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
         self.end_time = None
         self.actual_integrity_hash = None
 
     def __repr__(self):
         return (f"JobStatus(job_id={self.job_id}, "
                 f"replay_slice_id={self.slice_config.replay_slice_id}, "
-                f"status={self.status}, "
+                f"start_block_num={self.slice_config.start_block_id}, "
+                f"end_block_num={self.slice_config.end_block_id}, "
+                f"status={self.status.name}, "
                 f"last_block_processed={self.last_block_processed}, "
                 f"start_time={self.start_time}, end_time={self.end_time}, "
                 f"actual_integrity_hash={self.actual_integrity_hash})")
+
+    def __str__(self):
+        """converts job object to string"""
+        return (f"job_id={self.job_id}, "
+                f"replay_slice_id={self.slice_config.replay_slice_id}, "
+                f"start_block_num={self.slice_config.start_block_id}, "
+                f"end_block_num={self.slice_config.end_block_id}, "
+                f"status={self.status.name}, "
+                f"last_block_processed={self.last_block_processed}, "
+                f"start_time={self.start_time}, end_time={self.end_time}, "
+                f"actual_integrity_hash={self.actual_integrity_hash}")
+
+    def as_dict(self):
+        """converts job object to a dictionary"""
+        this_dict = {}
+        this_dict['job_id'] = self.job_id
+        this_dict['replay_slice_id'] = self.slice_config.replay_slice_id
+        this_dict['start_block_num'] = self.slice_config.start_block_id
+        this_dict['end_block_num'] = self.slice_config.end_block_id
+        this_dict['status'] = self.status.name
+        this_dict['last_block_processed'] = self.last_block_processed
+        this_dict['start_time'] = self.start_time
+        this_dict['end_time'] = self.end_time
+        this_dict['actual_integrity_hash'] = self.actual_integrity_hash
+        return this_dict
 
 
 class JobManager:
@@ -69,6 +113,19 @@ class JobManager:
     def set_job(self, job):
         """no op hook for future data persistance"""
         pass
+
+    def set_job_from_json(self, status_as_json, jobid):
+        """sets jobs data from json"""
+        data = json.loads(status_as_json)
+        job = self.jobs[jobid]
+        if 'status' in data and data['status'] is not None:
+            job.status = JobStatusEnum.lookup_by_name(data['status'])
+        if 'last_block_processed' in data:
+            job.last_block_processed = data['last_block_processed']
+        if 'end_time' in data:
+            job.end_time = data['end_time']
+        if 'actual_integrity_hash' in data:
+            job.actual_integrity_hash = data['actual_integrity_hash']
 
     def get_next_job(self):
         """get a job that needs a worker"""

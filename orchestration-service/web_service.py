@@ -10,44 +10,22 @@ jobs = JobManager(ReplayConfigManager('../../meta-data/test-simple-jobs.json'))
 @Request.application
 # pylint: disable=too-many-return-statements disable=too-many-branches
 def application(request):
-    """using werkzeug and python create a web application that supports the following.
-    A GET or POST request with the path '/job'.
-    The '/job' GET request it can take a URL parameter of 'nextjob'
-    with no value or a URL parameter of 'jobid' with an value.
-    When 'nextjob' parameter is present the web application calls
-    jobs.get_next_job() and returns the results in the body with a HTTP 200 code.
-    When the 'jobid' parameter is present the web application will
-    call jobs.get_job(jobid) and returns the results in the body with an HTTP 200 code.
-    When no parameters are provided the web applications issues
-    a 301 redirect to '/job?nextjob'
-    If the content-type of the GET request is 'text/plain; charset=us-ascii'
-    the results are formated as text string.
-    If the content-type of the GET request is 'application/json'
-    the results are formated as json.
-
-    The '/job' POST request must have a URL parameter for 'job' with a value.
-    If no parameter is present a 404 error is returned.
-    The content-type of the POST request is always 'application/json'.
-    The body of the POST request contains JSON which is parsed into a
-    dictionary named updated_values and passed to the method 'job.set_job(updated_values)'
-
-    Extend the application to include a request path '/status'
-    '/status' GET and POST requests take one parameter 'jobid'
-    For the GET request when parameter 'jobid' is present call 'jobs.get_job(jobid)'
-    and return the status for that job. If the if content-type is text-html returns html
-    if content-type is application/json returns json
-    if content-type is text/plain return a string
-    For the GET request when there are no parameters
-    call 'jobs.get_all()' and return statuses for all jobs.
-    If content-type is text-html returns html
-    if content-type is application/json returns json
-    if content-type is text/plain return a string
-
-    The POST request '/status' must have a jobid parameter and value.
-    For the POST request parse the json in the body as a
-    dictionary and pass the dictionary to 'jobs.set_job(data)'
-    When the POST request has no URL parameters return 404
     """
+    using werkzeug and python create a web application that supports
+    /job
+    /status
+    /restart
+    /healthcheck
+    """
+    # /job GET request
+    # two params nextjob with no values or jobid with a value
+    # when no params redirect to /job?nextjob
+    #
+    # nextjob get the next job ready for work, idle replay node would pick this up
+    # jobid get the configuration for a job
+    #
+    # how the results are reported depends on content-type passed in
+    # results could come page as text or json
     if request.path == '/job':
         if request.method == 'GET':
             nextjob = request.args.get('nextjob')
@@ -63,18 +41,18 @@ def application(request):
             if request.headers.get('Content-Type') == 'text/plain; charset=us-ascii':
                 return Response(str(result), content_type='text/plain; charset=us-ascii')
             if request.headers.get('Content-Type') == 'application/json':
-                return Response(json.dumps(result), content_type='application/json')
+                return Response(json.dumps(result.as_dict()), content_type='application/json')
 
         elif request.method == 'POST':
-            job = request.args.get('job')
-            if not job:
-                return Response("Job parameter is missing", status=404)
+            jobid = request.args.get('jobid')
+            if not jobid:
+                return Response("jobid parameter is missing", status=404)
 
             data = request.get_json()
             if not data:
                 return Response("Invalid JSON data", status=400)
 
-            jobs.set_job(data)
+            jobs.set_job_from_json(data, jobid)
             return Response(json.dumps({"status": "updated"}), content_type='application/json')
 
     elif request.path == '/status':
@@ -120,7 +98,7 @@ if __name__ == '__main__':
 
 # POST with jobid parses body and updates  status for that job
 # POST with no jobid return 404 error
-# /restart POST with bearer token
+# /reset POST with bearer token
 # POST parses body to get bearer_token. If bearer_token matches sets all jobs to status "terminated"
 # /healthcheck
 # GET request always returns 200 OK
