@@ -47,16 +47,20 @@ class BlockConfigManager:
         """returns bool compared hash in config (expected) to computed_integrity_hash (actual)"""
         return computed_integrity_hash == self.expected_integrity_hash
 
-    def to_json_str(self):
-        """formats object to string representing json"""
-        return f"""    {{
-        'start_block_id': {self.start_block_id},
-        'end_block_id': {self.end_block_id},
-        'snapshot_path': '{self.snapshot_path}',
-        'storage_type': '{self.storage_type}',
-        'expected_integrity_hash': '{self.expected_integrity_hash}',
-        'leap_version': '{self.leap_version}
-    }}"""
+    def as_dict(self, suppress_replay=False):
+        """converts job object to a dictionary"""
+        this_dict = {}
+        # if supress_replay then pass else assign
+        # default is to print
+        if not suppress_replay:
+            this_dict['replay_slice_id'] = self.replay_slice_id
+        this_dict['start_block_id'] = self.start_block_id
+        this_dict['end_block_id'] = self.end_block_id
+        this_dict['snapshot_path'] = self.snapshot_path
+        this_dict['storage_type'] = self.storage_type
+        this_dict['expected_integrity_hash'] = self.expected_integrity_hash
+        this_dict['leap_version'] = self.leap_version
+        return this_dict
 
 class ReplayConfigManager:
     """
@@ -129,11 +133,9 @@ class ReplayConfigManager:
 
     def to_json_str(self):
         """convert to json"""
-        # start array
-        this_json = "["
-        for record in self.records:
-            this_json = this_json + "\n" + record.to_json_str() + ","
-        # chop off the last common
-        # end array
-        this_json = this_json[:-1] + "\n]\n"
-        return this_json
+        # convert to array of dictionary
+        # remove the replay slice, internal to ReplayConfigManager
+        suppress_replay=True
+        dictionary_repr = [obj.as_dict(suppress_replay) for obj in self.records]
+        # dump json
+        return json.dumps(dictionary_repr, indent=4)
