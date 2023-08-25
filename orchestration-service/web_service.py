@@ -1,11 +1,11 @@
 """modules needed for web application"""
+import argparse
 import json
 from werkzeug.wrappers import Request, Response
 from werkzeug.serving import run_simple
+from report_templates import ReportTemplate
 from replay_configuration import ReplayConfigManager
 from job_status import JobManager
-
-jobs = JobManager(ReplayConfigManager('../../meta-data/test-simple-jobs.json'))
 
 @Request.application
 # pylint: disable=too-many-return-statements disable=too-many-branches
@@ -17,6 +17,7 @@ def application(request):
     /restart
     /healthcheck
     """
+
     # /job GET request
     # two params nextjob with no values or jobid with a value
     # when no params redirect to /job?nextjob
@@ -26,11 +27,17 @@ def application(request):
     #
     # how the results are reported depends on content-type passed in
     # results could come page as text or json
+    print (f"Request Path {request.path} Method {request.method} Arg Keys {request.args.keys()} Content Type {request.headers.get('Content-Type')}\n")
     if request.path == '/job':
+        # capture Content-Type
+        request_content_type = request.headers.get('Content-Type')
+
+        # Work through GET Requests first
         if request.method == 'GET':
             nextjob = request.args.get('nextjob')
             jobid = request.args.get('jobid')
 
+            # Handle URL Parameters
             if nextjob is not None:
                 result = jobs.get_next_job()
             elif jobid is not None:
@@ -38,12 +45,18 @@ def application(request):
             else:
                 return Response("", status=301, headers={"Location": "/job?nextjob"})
 
-            if request.headers.get('Content-Type') == 'text/plain; charset=us-ascii':
-                return Response(str(result), content_type='text/plain; charset=us-ascii')
-            if request.headers.get('Content-Type') == 'application/json':
+            # Format based on content type
+            # content type is None when no content-type passed in
+            if (request_content_type == 'text/plain; charset=utf-8' or
+                request_content_type == 'text/plain' or request_content_type is None):
+                return Response(str(result), content_type='text/plain; charset=utf-8')
+            if request_content_type == 'application/json':
                 return Response(json.dumps(result.as_dict()), content_type='application/json')
 
+        # Work through POST Requests
         elif request.method == 'POST':
+
+            # must have jobid parameter
             jobid = request.args.get('jobid')
             if not jobid:
                 return Response("jobid parameter is missing", status=404)
@@ -52,31 +65,41 @@ def application(request):
             if not data:
                 return Response("Invalid JSON data", status=400)
 
+            # no need to validate content type
             jobs.set_job_from_json(data, jobid)
             return Response(json.dumps({"status": "updated"}), content_type='application/json')
 
     elif request.path == '/status':
+        # Capture the Content-Type
+        request_content_type = request.headers.get('Content-Type')
         jobid = request.args.get('jobid')
-        content_type = request.headers.get('Content-Type')
 
+        # Handle URL Parameters
         if request.method == 'GET':
             if jobid:
-                result = jobs.get_job(jobid)
+                results['job'] = jobs.get_job(jobid)
             else:
-                result = jobs.get_all()
+                results = jobs.get_all()
 
-            if content_type == 'text/html':
+            if request_content_type == 'text/html':
                 # Converting to simple HTML representation (adjust as needed)
-                return Response("<br>".join([f"{k}: {v}" \
-                    for item in result for k, v in item.items()]),
-                    content_type='text/html')
-            if content_type == 'application/json':
-                return Response(json.dumps(result),
-                content_type='application/json')
-            if content_type == 'text/plain':
-                return Response("\n".join([f"{k}: {v}" \
-                for item in result for k, v in item.items()]),
-                content_type='text/plain')
+                content = ReportTemplate.job_html_header()
+                for job in results.values():
+                    content += ReportTemplate.job_html(job)
+                content += ReportTemplate.job_html_footer()
+                return Response(content, content_type='text/html')
+            if request_content_type == 'application/json':
+                # Converting from object to dictionarys to dump json
+                jobs_as_dict = {key: obj.as_dict() for key, obj in results.items()}
+                return Response(json.dumps(jobs_as_dict),content_type='application/json')
+            if (request_content_type == 'text/plain; charset=utf-8' or
+                request_content_type == "text/plain" or request_content_type is None):
+                # Converting to simple Text format
+                content = ReportTemplate.job_text_header()
+                for job in results.values():
+                    content += str(job)
+                content += ReportTemplate.job_text_footer()
+                return Response(content,content_type='text/plain; charset=uft-8')
 
         elif request.method == 'POST':
             if not jobid:
@@ -92,9 +115,17 @@ def application(request):
     return Response("Not found", status=404)
 
 if __name__ == '__main__':
-    run_simple('127.0.0.1', 4000, application)
+    parser = argparse.ArgumentParser(description='Orchestration Service to manage tests to replay on the antelope blockchain')
+    parser.add_argument('--config', '-c', type=str, help='Path to config json')
+    parser.add_argument('--port', type=int, default=4000, help='Port for web service')
+    parser.add_argument('--host', type=str, default="0.0.0.0", help='Listening service name or ip')
 
+    args = parser.parse_args()
 
+    # remove this if Local config works
+    replay_config_manager = ReplayConfigManager(args.config)
+    jobs = JobManager(replay_config_manager)
+    run_simple(args.host, args.port, application)
 
 # POST with jobid parses body and updates  status for that job
 # POST with no jobid return 404 error
