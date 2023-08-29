@@ -48,6 +48,10 @@ def application(request):
             else:
                 return Response("", status=301, headers={"Location": "/job?nextjob"})
 
+            # Check we have a legit value
+            if result is None:
+                return Response("Could not find job", status=404)
+
             # Format based on content type
             # content type is None when no content-type passed in
             # redirect strips content type
@@ -72,9 +76,13 @@ def application(request):
             if not data:
                 return Response("Invalid JSON data", status=400)
 
-            # no need to validate content type
-            jobs.set_job_from_json(data, jobid)
-            return Response(json.dumps({"status": "updated"}), content_type='application/json')
+            # expects id to exist
+            if not 'job_id' in data:
+                data['job_id'] = jobid
+            # check bool success for set_job to ensure valid data
+            if jobs.set_job(data):
+                return Response(json.dumps({"status": "updated"}), content_type='application/json')
+            return Response("Invalid job JSON data", status=400)
 
     elif request.path == '/status':
         # Capture the Content-Type

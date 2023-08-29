@@ -98,34 +98,52 @@ class JobManager:
     def __init__(self, replay_configs):
         self.jobs = {}
         for slice_config in replay_configs:
-            job_status = JobStatus(slice_config)
-            self.jobs[job_status.job_id] = job_status
+            job = JobStatus(slice_config)
+            self.jobs[job.job_id] = job
 
     def get_job(self, job_id):
-        """Return job by id"""
-        return self.jobs.get(job_id)
+        """Return job by id, return dict or on error return None"""
+        if not str(job_id).isnumeric():
+            return None
+        job_id = int(job_id)
+        if job_id in self.jobs:
+            return self.jobs[job_id]
+        return None
 
     def get_all(self):
         """Return all jobs"""
         return self.jobs
 
-    # pylint: disable=unnecessary-pass
-    def set_job(self, job):
-        """no op hook for future data persistance"""
-        pass
+    def set_job(self, data):
+        """update job records, from dictionary, return bool success"""
+
+        # not a success
+        if not 'job_id' in data or data['job_id'] is None:
+            return False
+        if not 'status' in data or data['status'] is None:
+            return False
+
+        # job id
+        jobid = data['job_id']
+
+        if 'status' in data:
+            self.jobs[jobid].status = JobStatusEnum.lookup_by_name(data['status'])
+        if 'last_block_processed' in data:
+            self.jobs[jobid].last_block_processed = data['last_block_processed']
+        if 'end_time' in data:
+            self.jobs[jobid].end_time = data['end_time']
+        if 'actual_integrity_hash' in data:
+            self.jobs[jobid].actual_integrity_hash = data['actual_integrity_hash']
+
+        # success
+        return True
+
 
     def set_job_from_json(self, status_as_json, jobid):
-        """sets jobs data from json"""
+        """sets jobs data from json, calls set_job(), return bool for success"""
         data = json.loads(status_as_json)
-        job = self.jobs[jobid]
-        if 'status' in data and data['status'] is not None:
-            job.status = JobStatusEnum.lookup_by_name(data['status'])
-        if 'last_block_processed' in data:
-            job.last_block_processed = data['last_block_processed']
-        if 'end_time' in data:
-            job.end_time = data['end_time']
-        if 'actual_integrity_hash' in data:
-            job.actual_integrity_hash = data['actual_integrity_hash']
+        data['job_id'] = jobid
+        return self.set_job(data)
 
     def get_next_job(self):
         """get a job that needs a worker"""
