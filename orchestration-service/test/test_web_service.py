@@ -118,6 +118,20 @@ def test_update_job(setup_module):
     # this should always update
     assert updated.status_code == 200
 
+    # double updates no possible
+    # prevents race conditions and old updates coming through
+    jobparams = { 'jobid': validate_job['job_id'] }
+    # add previous older and bad ETag Header
+    cntx['json_headers']['ETag'] = etag_value
+    updated = requests.post(cntx['base_url'] + '/job',
+        params=jobparams,
+        headers=cntx['json_headers'],
+        data=json.dumps(validate_job))
+    # clear out value
+    cntx['json_headers']['ETag'] = ""
+    # fails on ETag Mismatch
+    assert updated.status_code == 400
+
 def test_no_more_jobs(setup_module):
     """Using nextjob loop over the jobs updating status; eventually no more jobs and None is returned"""
     cntx = setup_module
@@ -138,7 +152,7 @@ def test_no_more_jobs(setup_module):
         if response.status_code == 404:
             _ok = False
         # track how many good results
-        # only 200 OK have ETag 
+        # only 200 OK have ETag
         if response.status_code == 200:
             counter += 1
             etag_value = response.headers['ETag']

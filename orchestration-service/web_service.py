@@ -87,7 +87,6 @@ def application(request):
                 ).encode("utf-8")
             expected_etag = generate_etag(job_as_str)
             if expected_etag != request_etag:
-                print(f"ETag mismatch {expected_etag} vs {request_etag}")
                 return Response("Invalid ETag", status=400)
 
             data = request.get_json()
