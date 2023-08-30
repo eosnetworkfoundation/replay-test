@@ -34,6 +34,7 @@ def test_job_redirect(setup_module):
     # request a job test that /job follows redirect to /job?nextjob
     # both /job and /job?nextjob should result in the same response
     follow_redir_response = requests.get(cntx['base_url'] + '/job', headers=cntx['plain_text_headers'])
+    assert len(follow_redir_response.headers['ETag']) > 30
     assert follow_redir_response.status_code == 200
 
     params = { 'nextjob': 1 }
@@ -44,6 +45,7 @@ def test_job_redirect(setup_module):
     #print (f"headers {direct_response.headers} content {direct_response.content}")
     assert direct_response.status_code == 200
     assert follow_redir_response.content == direct_response.content
+    assert follow_redir_response.headers['ETag'] == direct_response.headers['ETag']
 
 def test_get_nextjob(setup_module):
     """Validate the data returned differs by Content Type"""
@@ -74,6 +76,7 @@ def test_update_job(setup_module):
     params = { 'nextjob': 1 }
     response_first = requests.get(cntx['base_url'] + '/job', params=params, headers=cntx['json_headers'])
     assert response_first.status_code == 200
+    etag_value = response_first.headers['ETag']
 
     # we are going to change status
     # validate status before change
@@ -85,11 +88,14 @@ def test_update_job(setup_module):
     job_first_request['status'] = 'STARTED'
 
     # serialized dict to JSON when passing in
+    # Add ETag Header
+    cntx['json_headers']['ETag'] = etag_value
     updated_first = requests.post(cntx['base_url'] + '/job',
         params=params,
         headers=cntx['json_headers'],
         data=json.dumps(job_first_request))
     assert updated_first.status_code == 200
+    etag_value = updated_first.headers['ETag']
 
     # fetch again to validate update
     # validate status after change
@@ -101,11 +107,15 @@ def test_update_job(setup_module):
     # restore job to enable reruns of tests
     validate_job['status'] = 'WAITING_4_WORKER'
     jobparams = { 'jobid': validate_job['job_id'] }
+    # add ETag Header
+    cntx['json_headers']['ETag'] = etag_value
     updated = requests.post(cntx['base_url'] + '/job',
         params=jobparams,
         headers=cntx['json_headers'],
         data=json.dumps(validate_job))
-        # this should always update
+    # clear out value
+    cntx['json_headers']['ETag'] = ""
+    # this should always update
     assert updated.status_code == 200
 
 def test_no_more_jobs(setup_module):
@@ -115,7 +125,11 @@ def test_no_more_jobs(setup_module):
 
     _ok = True
     counter = 0
+    # array of jobs to restore
+    # restore jobs to allow repeat test runs
     restore_jobs = []
+    # need this dict to hold etag to restore jobs state
+    etag_db = {}
 
     while _ok:
         nextjobparams = { 'nextjob': 1 }
@@ -124,8 +138,10 @@ def test_no_more_jobs(setup_module):
         if response.status_code == 404:
             _ok = False
         # track how many good results
+        # only 200 OK have ETag 
         if response.status_code == 200:
             counter += 1
+            etag_value = response.headers['ETag']
         result = response.content
         # no infinite loops
         if counter > 10:
@@ -138,12 +154,18 @@ def test_no_more_jobs(setup_module):
             # update status
             job['status'] = 'STARTED'
             jobparams = { 'jobid': job['job_id'] }
+            # add ETag to Request
+            cntx['json_headers']['ETag'] = etag_value
             updated = requests.post(cntx['base_url'] + '/job',
                 params=jobparams,
                 headers=cntx['json_headers'],
                 data=json.dumps(job))
             # this should always update
             assert updated.status_code == 200
+            # clear out old header and store lookup for future use
+            cntx['json_headers']['ETag'] = ""
+            # post returns new ETag matching modified content
+            etag_db[job['job_id']] = updated.headers['ETag']
     # count differs depending on order of test execution
     assert counter > 1
 
@@ -152,6 +174,8 @@ def test_no_more_jobs(setup_module):
         # pass by reference not deep copy reset status
         job['status'] = 'WAITING_4_WORKER'
         jobparams = { 'jobid': job['job_id'] }
+        # Add ETag
+        cntx['json_headers']['ETag'] = etag_db[job['job_id']]
         updated = requests.post(cntx['base_url'] + '/job',
             params=jobparams,
             headers=cntx['json_headers'],

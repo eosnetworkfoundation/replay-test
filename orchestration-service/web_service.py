@@ -4,6 +4,7 @@ import json
 import sys
 from werkzeug.wrappers import Request, Response
 from werkzeug.serving import run_simple
+from werkzeug.http import generate_etag
 from report_templates import ReportTemplate
 from replay_configuration import ReplayConfigManager
 from job_status import JobManager
@@ -32,7 +33,8 @@ def application(request):
     Method {request.method}
     Params {request.args.keys()}
     Content Type {request.headers.get('Content-Type')}
-    Accept  {request.headers.get('Accept')}""")
+    Accept  {request.headers.get('Accept')}
+    ETag {request.headers.get('ETag')}""")
     if request.path == '/job':
         # capture Accept Header
         request_accept_type = request.headers.get('Accept')
@@ -53,6 +55,8 @@ def application(request):
             if result is None:
                 return Response("Could not find job", status=404)
 
+            etag_value = generate_etag(str(result.as_dict()).encode("utf-8"))
+
             # Format based on content type
             # content type is None when no content-type passed in
             # redirect strips content type
@@ -61,18 +65,29 @@ def application(request):
                 'text/plain' in request_accept_type or
                 '*/*' in request_accept_type or
                 request_accept_type is None):
-                return Response(str(result), content_type='text/plain; charset=utf-8')
+                response = Response(str(result), content_type='text/plain; charset=utf-8')
+                response.headers['ETag'] = etag_value
+                return response
             # JSON
             if 'application/json' in request_accept_type:
-                return Response(json.dumps(result.as_dict()), content_type='application/json')
+                response = Response(json.dumps(result.as_dict()), content_type='application/json')
+                response.headers['ETag'] = etag_value
+                return response
 
         # Work through POST Requests
         elif request.method == 'POST':
+            request_etag = request.headers.get('ETag')
 
             # must have jobid parameter
             jobid = request.args.get('jobid')
             if not jobid:
                 return Response("jobid parameter is missing", status=404)
+            # validate etags to avoid race conditions
+            job_as_str = str(jobs.get_job(jobid).as_dict()).encode("utf-8")
+            expected_etag = generate_etag(job_as_str)
+            if expected_etag != request_etag:
+                print(f"ETag mismatch {expected_etag} vs {request_etag}")
+                return Response("Invalid ETag", status=400)
 
             data = request.get_json()
             if not data:
@@ -83,7 +98,11 @@ def application(request):
                 data['job_id'] = jobid
             # check bool success for set_job to ensure valid data
             if jobs.set_job(data):
-                return Response(json.dumps({"status": "updated"}), content_type='application/json')
+                stringified = str(jobs.get_job(jobid).as_dict()).encode("utf-8")
+                etag_value = generate_etag(stringified)
+                response = Response(json.dumps({"status": "updated"}), content_type='application/json')
+                response.headers['ETag'] = etag_value
+                return response
             return Response("Invalid job JSON data", status=400)
 
     elif request.path == '/status':
@@ -131,6 +150,9 @@ def application(request):
                 content = ReportTemplate.status_html_report(results)
                 return Response(content,content_type='text/plain; charset=uft-8')
 
+    elif request.path == '/healthcheck':
+        return Response("OK",content_type='text/plain; charset=uft-8')
+
     return Response("Not found", status=404)
 
 if __name__ == '__main__':
@@ -148,10 +170,3 @@ to manage tests to replay on the antelope blockchain')
     replay_config_manager = ReplayConfigManager(args.config)
     jobs = JobManager(replay_config_manager)
     run_simple(args.host, args.port, application)
-
-# POST with jobid parses body and updates  status for that job
-# POST with no jobid return 404 error
-# /reset POST with bearer token
-# POST parses body to get bearer_token. If bearer_token matches sets all jobs to status "terminated"
-# /healthcheck
-# GET request always returns 200 OK
