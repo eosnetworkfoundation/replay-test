@@ -12,6 +12,7 @@ fi
 
 mkdir ~/config
 mkdir ~/data
+mkdir ~/snapshot
 mkdir ~/log
 
 cp $CONFIG ~/config
