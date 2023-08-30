@@ -11,10 +11,17 @@ def setup_module():
     setup['base_url']='http://127.0.0.1:4000'
 
     setup['plain_text_headers'] = {
+        'Accept': 'text/plain; charset=utf-8',
         'Content-Type': 'text/plain; charset=utf-8',
     }
 
     setup['json_headers'] = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+    }
+
+    setup['html_headers'] = {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
     }
     return setup
@@ -101,7 +108,6 @@ def test_update_job(setup_module):
         # this should always update
     assert updated.status_code == 200
 
-
 def test_no_more_jobs(setup_module):
     """Using nextjob loop over the jobs updating status; eventually no more jobs and None is returned"""
     cntx = setup_module
@@ -152,3 +158,17 @@ def test_no_more_jobs(setup_module):
             data=json.dumps(job))
         # this should always update
         assert updated.status_code == 200
+
+def test_status_reports(setup_module):
+    """Request full status and check results"""
+    cntx = setup_module
+
+    response = requests.get(cntx['base_url'] + '/status', headers=cntx['json_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 500
+    response = requests.get(cntx['base_url'] + '/status', headers=cntx['plain_text_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 500
+    response = requests.get(cntx['base_url'] + '/status', headers=cntx['html_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 500

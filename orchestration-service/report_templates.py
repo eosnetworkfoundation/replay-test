@@ -3,14 +3,14 @@ class ReportTemplate:
     """Static method for reports. Headers, footers, and item listings"""
 
     @staticmethod
-    def job_html_header():
-        """HTML Headers for Job Report"""
+    def status_html_header():
+        """HTML Headers for Status Report"""
         return """<!DOCTYPE html>
 <html>
 <head>
-<title>Chicken Dance Job Report</title>
+<title>Chicken Dance Status Report</title>
 <style>
-ul {{
+ul {
     background: #e1e1e1;
     border: 1px solid;
     border-top: .5rem solid;
@@ -18,42 +18,57 @@ ul {{
     border-bottom-left-radius: 5px;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
-   }}
-li {{ padding: .5em }}
+    width: 32em;
+   }
+li { padding: .5em }
 </style>
 </head>
 
-<body>"""
+<body>
+<h2>Chicken Dance Status Report</h2>
+"""
 
 
     @staticmethod
-    def job_html_footer():
-        """HTML Footer For Job Report"""
+    def status_html_footer():
+        """HTML Footer For Status Report"""
         return "</body></html>"
 
     @staticmethod
-    def job_html(job):
-        """HTML Template For Job Report"""
-        job_as_dict = job.as_dict()
+    def status_html(this_slice):
+        """HTML Template For Status Report"""
         return f"""        <ul>
-        <li> Job ID: {job_as_dict.job_id}</li>
-        <li> Job Status: {job_as_dict.status}</li>
-        <li> Last Block Processed: {job_as_dict.last_block_processed}</li>
-        <li> Start Time: {job_as_dict.start_time}</li>
-        <li> End Time: {job_as_dict.end_time}</li>
-        <li> Integrity Hash: {job_as_dict.actual_integrity_hash}</li>
-        <li> Start Block: {job_as_dict.start_block_num}</li>
-        <li> End Block: {job_as_dict.end_block_num}</li>
-        <li> Configuration ID: {job_as_dict.replay_slice_id}</li>
+        <li> Replay Slice Id: {this_slice.replay_slice_id}</li>
+        <li> Job Status: NA</li>
+        <li> Last Block Processed: NA</li>
+        <li> Start Time: NA</li>
+        <li> End Time: NA</li>
+        <li> Integrity Hash: {this_slice.expected_integrity_hash}</li>
+        <li> Start Block: {this_slice.start_block_id}</li>
+        <li> End Block: {this_slice.end_block_id}</li>
+        <li> Leap Version: {this_slice.leap_version}</li>
     </ul>
 """
 
     @staticmethod
-    def job_text_header():
-        """Text Header for Job Report"""
+    def status_text_header():
+        """Text Header for Status Report"""
         return "      JOB REPORT              \n-------------------------------------\n"
 
     @staticmethod
-    def job_text_footer():
-        """Text Footer for Job Report"""
+    def status_text(this_slice):
+        """Text Template For Status Report"""
+        return f""" Replay Slice Id: {this_slice.replay_slice_id}
+    Job Status: NA
+    Last Block Processed: NA
+    Start Time: NA
+    End Time: NA
+    Integrity Hash: {this_slice.expected_integrity_hash}
+    Start Block: {this_slice.start_block_id}
+    End Block: {this_slice.end_block_id}
+    Leap Version: {this_slice.leap_version}\n"""
+
+    @staticmethod
+    def status_text_footer():
+        """Text Footer for Status Report"""
         return "--------------- END ------------------\n"

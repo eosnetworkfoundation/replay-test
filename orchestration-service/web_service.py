@@ -31,10 +31,11 @@ def application(request):
     print (f"""\nSTART: Request Path {request.path}
     Method {request.method}
     Params {request.args.keys()}
-    Content Type {request.headers.get('Content-Type')}""")
+    Content Type {request.headers.get('Content-Type')}
+    Accept  {request.headers.get('Accept')}""")
     if request.path == '/job':
-        # capture Content-Type
-        request_content_type = request.headers.get('Content-Type')
+        # capture Accept Header
+        request_accept_type = request.headers.get('Accept')
 
         # Work through GET Requests first
         if request.method == 'GET':
@@ -56,12 +57,13 @@ def application(request):
             # content type is None when no content-type passed in
             # redirect strips content type
             # DEFAULT and PLAIN TEXT
-            if (request_content_type == 'text/plain; charset=utf-8' or
-                request_content_type == 'text/plain' or
-                request_content_type is None):
+            if ('text/plain; charset=utf-8' in request_accept_type or
+                'text/plain' in request_accept_type or
+                '*/*' in request_accept_type or
+                request_accept_type is None):
                 return Response(str(result), content_type='text/plain; charset=utf-8')
             # JSON
-            if request_content_type == 'application/json':
+            if 'application/json' in request_accept_type:
                 return Response(json.dumps(result.as_dict()), content_type='application/json')
 
         # Work through POST Requests
@@ -85,54 +87,52 @@ def application(request):
             return Response("Invalid job JSON data", status=400)
 
     elif request.path == '/status':
-        # Capture the Content-Type
-        request_content_type = request.headers.get('Content-Type')
-        jobid = request.args.get('jobid')
-        results = {}
+        # Capture the Accept Type
+        request_accept_type = request.headers.get('Accept')
+        replay_slice = request.args.get('pos')
+        results = []
 
         # Handle URL Parameters
         if request.method == 'GET':
-            if jobid:
-                results['job'] = jobs.get_job(jobid)
+            # if id push one element into an array
+            # else return the entire array
+            if replay_slice:
+                print(f"=>> pos {replay_slice}")
+                this_slice = replay_config_manager.get(replay_slice)
+                if this_slice is None:
+                    return Response("Not found", status=404)
+                results.append(this_slice)
+
             else:
-                results = jobs.get_all()
+                results = replay_config_manager.records
 
             # Format based on content type
             # content type is None when no content-type passed in
             # redirect strips content type
             # HTML
-            if request_content_type == 'text/html':
+            if 'text/html' in request_accept_type:
                 # Converting to simple HTML representation (adjust as needed)
-                content = ReportTemplate.job_html_header()
-                for job in results.values():
-                    content += ReportTemplate.job_html(job)
-                content += ReportTemplate.job_html_footer()
+                content = ReportTemplate.status_html_header()
+                for config in results:
+                    content += ReportTemplate.status_html(config)
+                content += ReportTemplate.status_html_footer()
                 return Response(content, content_type='text/html')
             # JSON
-            if request_content_type == 'application/json':
+            if 'application/json' in request_accept_type:
                 # Converting from object to dictionarys to dump json
-                jobs_as_dict = {key: obj.as_dict() for key, obj in results.items()}
-                return Response(json.dumps(jobs_as_dict),content_type='application/json')
+                results_as_dict = [obj.as_dict() for obj in results]
+                return Response(json.dumps(results_as_dict),content_type='application/json')
             # DEFAULT and PLAIN TEXT
-            if (request_content_type == 'text/plain; charset=utf-8' or
-                request_content_type == "text/plain" or request_content_type is None):
+            if ('text/plain; charset=utf-8' in request_accept_type or
+                'text/plain' in request_accept_type or
+                '*/*' in request_accept_type or
+                request_accept_type is None):
                 # Converting to simple Text format
-                content = ReportTemplate.job_text_header()
-                for job in results.values():
-                    content += str(job)
-                content += ReportTemplate.job_text_footer()
+                content = ReportTemplate.status_text_header()
+                for config in results:
+                    content += ReportTemplate.status_text(config)
+                content += ReportTemplate.status_text_footer()
                 return Response(content,content_type='text/plain; charset=uft-8')
-
-        elif request.method == 'POST':
-            if not jobid:
-                return Response("JobId parameter is missing", status=404)
-
-            data = request.get_json()
-            if not data:
-                return Response("Invalid JSON data", status=400)
-
-            jobs.set_job(data)
-            return Response(json.dumps({"status": "updated"}), content_type='application/json')
 
     return Response("Not found", status=404)
 

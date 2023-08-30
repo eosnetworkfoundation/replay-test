@@ -102,6 +102,9 @@ class ReplayConfigManager:
 
     def get(self, primary_key):
         """get a record by id, pk is unique returns only one"""
+        if not str(primary_key).isnumeric():
+            return None
+        primary_key = int(primary_key)
         for record in self.records:
             if record.replay_slice_id == primary_key:
                 return record

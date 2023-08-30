@@ -33,7 +33,7 @@ def test_exhaust_jobs(setup_module):
         job = manager.get_next_job()
         assert job.status == JobStatusEnum.WAITING_4_WORKER
         job.status = JobStatusEnum.STARTED
-        manager.set_job(job)
+        manager.set_job(job.as_dict())
         assert job is not None
     job = manager.get_next_job()
     assert job is None
