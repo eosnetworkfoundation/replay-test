@@ -11,6 +11,7 @@ from job_status import JobManager
 
 @Request.application
 # pylint: disable=too-many-return-statements disable=too-many-branches
+# pylint: disable=too-many-statements
 def application(request):
     """
     using werkzeug and python create a web application that supports
@@ -41,11 +42,10 @@ def application(request):
 
         # Work through GET Requests first
         if request.method == 'GET':
-            jobid = request.args.get('jobid')
 
             # Handle URL Parameters
-            if jobid is not None:
-                result = jobs.get_job(jobid)
+            if request.args.get('jobid') is not None:
+                result = jobs.get_job(request.args.get('jobid'))
             elif 'nextjob' in request.args.keys():
                 result = jobs.get_next_job()
             else:
@@ -79,11 +79,12 @@ def application(request):
             request_etag = request.headers.get('ETag')
 
             # must have jobid parameter
-            jobid = request.args.get('jobid')
-            if not jobid:
-                return Response("jobid parameter is missing", status=404)
+            if not request.args.get('jobid'):
+                return Response('jobid parameter is missing', status=404)
             # validate etags to avoid race conditions
-            job_as_str = str(jobs.get_job(jobid).as_dict()).encode("utf-8")
+            job_as_str = str(
+                jobs.get_job(request.args.get('jobid')).as_dict()
+                ).encode("utf-8")
             expected_etag = generate_etag(job_as_str)
             if expected_etag != request_etag:
                 print(f"ETag mismatch {expected_etag} vs {request_etag}")
@@ -95,12 +96,16 @@ def application(request):
 
             # expects id to exist
             if not 'job_id' in data:
-                data['job_id'] = jobid
+                data['job_id'] = request.args.get('jobid')
             # check bool success for set_job to ensure valid data
             if jobs.set_job(data):
-                stringified = str(jobs.get_job(jobid).as_dict()).encode("utf-8")
+                stringified = str(
+                    jobs.get_job(request.args.get('jobid')).as_dict()
+                    ).encode("utf-8")
                 etag_value = generate_etag(stringified)
-                response = Response(json.dumps({"status": "updated"}), content_type='application/json')
+                response = Response(
+                    json.dumps({"status": "updated"}),
+                    content_type='application/json')
                 response.headers['ETag'] = etag_value
                 return response
             return Response("Invalid job JSON data", status=400)
