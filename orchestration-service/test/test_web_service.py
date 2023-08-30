@@ -172,3 +172,20 @@ def test_status_reports(setup_module):
     response = requests.get(cntx['base_url'] + '/status', headers=cntx['html_headers'])
     assert response.status_code == 200
     assert len(response.content) > 500
+    # check position arg
+    params = { 'pos': 1 }
+    response = requests.get(cntx['base_url'] + '/status',
+        params=params,
+        headers=cntx['json_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 50
+    response = requests.get(cntx['base_url'] + '/status',
+        params=params,
+        headers=cntx['plain_text_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 50
+    response = requests.get(cntx['base_url'] + '/status',
+        params=params,
+        headers=cntx['html_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 50

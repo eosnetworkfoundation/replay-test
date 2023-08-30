@@ -97,14 +97,17 @@ def application(request):
             # if id push one element into an array
             # else return the entire array
             if replay_slice:
-                print(f"=>> pos {replay_slice}")
-                this_slice = replay_config_manager.get(replay_slice)
+                this_slice = jobs.get_by_position(replay_slice)
+
+                # check if not set and results empty
                 if this_slice is None:
                     return Response("Not found", status=404)
+                # set the slice
                 results.append(this_slice)
 
             else:
-                results = replay_config_manager.records
+                for this_slice in jobs.get_all().items():
+                    results.append(this_slice[1])
 
             # Format based on content type
             # content type is None when no content-type passed in
@@ -112,10 +115,7 @@ def application(request):
             # HTML
             if 'text/html' in request_accept_type:
                 # Converting to simple HTML representation (adjust as needed)
-                content = ReportTemplate.status_html_header()
-                for config in results:
-                    content += ReportTemplate.status_html(config)
-                content += ReportTemplate.status_html_footer()
+                content = ReportTemplate.status_html_report(results)
                 return Response(content, content_type='text/html')
             # JSON
             if 'application/json' in request_accept_type:
@@ -128,10 +128,7 @@ def application(request):
                 '*/*' in request_accept_type or
                 request_accept_type is None):
                 # Converting to simple Text format
-                content = ReportTemplate.status_text_header()
-                for config in results:
-                    content += ReportTemplate.status_text(config)
-                content += ReportTemplate.status_text_footer()
+                content = ReportTemplate.status_html_report(results)
                 return Response(content,content_type='text/plain; charset=uft-8')
 
     return Response("Not found", status=404)

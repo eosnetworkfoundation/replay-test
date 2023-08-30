@@ -151,3 +151,21 @@ class JobManager:
             if job.status == JobStatusEnum.WAITING_4_WORKER:
                 return job
         return None
+
+    def get_by_position(self, position):
+        """returns an entry by position in interator"""
+        # type check
+        if str(position).isnumeric():
+            position = int(position)
+        else:
+            return None
+
+        # iterate over dictionary and return value
+        pos_i = 0
+        for this_slice in self.jobs.items():
+            pos_i += 1
+            if pos_i == position:
+                return this_slice[1]
+
+        # check if not set and results empty
+        return None
