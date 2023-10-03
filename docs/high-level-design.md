@@ -9,8 +9,8 @@ Once replay hosts are spun up they contact the orchestration service to get the 
 C4Context
 title Overview of Replay Testing System
 
-Person(enfEmployee, "Authorized ENF Employee/Contractor")
-SystemQueue(orchestration, "Web Service that holds the state of jobs")
+Person(enfEmployee, "Authorized ENF Person")
+SystemQueue(orchestrator, "Orchestrator", "Web Service that holds the state of jobs")
 
 System_Boundary(nodes, "Replay Nodes") {
   System(replayA,"Replay Host A", "Host that start nodeos and run transactions")
@@ -19,16 +19,36 @@ System_Boundary(nodes, "Replay Nodes") {
   System(replayD,"Replay Host D", "Host that start nodeos and run transactions")
 }
 
-Rel(enfEmployee, orchestration, "gets job status", "HTTP")
-UpdateRelStyle(enfEmployee, orchestration, $offsetX="-50", $offsetY="+10")
-Rel(replayA, orchestration, "gets jobs/sets status", "HTTP")
-UpdateRelStyle(replayA, orchestration, $offsetY="-45")
-Rel(replayB, orchestration, "gets jobs/sets status", "HTTP")
-UpdateRelStyle(replayB, orchestration, $offsetY="-45")
-Rel(replayC, orchestration, "gets jobs/sets status", "HTTP")
-UpdateRelStyle(replayC, orchestration, $offsetY="-45")
-Rel(replayD, orchestration, "gets jobs/sets status", "HTTP")
-UpdateRelStyle(replayD, orchestration, $offsetY="-45")
-Rel(replayD, orchestration, "gets jobs/sets status", "HTTP")
-UpdateRelStyle(replayD, orchestration, $offsetY="-45")
+Rel(enfEmployee, orchestrator, "gets job status", "HTTP")
+UpdateRelStyle(enfEmployee, orchestrator, $offsetY="-35", $offsetX="-40")
+Rel(replayA, orchestrator, "gets jobs/sets status", "HTTP")
+UpdateRelStyle(replayA, orchestrator, $offsetY="-35", $offsetX="+10")
+Rel(replayB, orchestrator, "gets jobs/sets status", "HTTP")
+UpdateRelStyle(replayB, orchestrator, $offsetY="-35")
+Rel(replayC, orchestrator, "gets jobs/sets status", "HTTP")
+UpdateRelStyle(replayC, orchestrator, $offsetY="-35")
+Rel(replayD, orchestrator, "gets jobs/sets status", "HTTP")
+UpdateRelStyle(replayD, orchestrator, $offsetY="-35", $offsetX="+30")
+Rel(replayD, orchestrator, "gets jobs/sets status", "HTTP")
+```
+
+
+## Sequence
+Fairly straight forward, the relay host picks up a job, and updates the jobs status while it works through the lifecycle. The relay host will update the progress by updating the last block processed. Full list of status is found here. https://github.com/eosnetworkfoundation/replay-test/blob/311f13439542542c0b24e313a26a012eb59a8a6c/orchestration-service/job_status.py#L9-L15
+
+```mermaid
+
+sequenceDiagram
+    participant Relay as Replay Host
+    participant Orch as Orchestrator
+    Relay->>Orch: GET /job?nextjob
+    Orch->>Relay: json_job
+    Relay->>Orch: POST /job status=STARTED
+    Orch->>Relay: 200 SUCCESS
+    Relay->>Orch: POST /job status=WORKING
+    Orch->>Relay: 200 SUCCESS
+    Relay->>Orch: POST /job last_block_processed=XXXX
+    Orch->>Relay: 200 SUCCESS
+    Relay->>Orch: POST /job status=COMPLETE
+    Orch->>Relay: 200 SUCCESS
 ```
