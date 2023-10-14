@@ -12,6 +12,7 @@ class JobStatusEnum(Enum):
     FINISHED = "finished"
     ERROR = "error"
     TIMEOUT = "timeout"
+    COMPLETE = "complete"
 
     @staticmethod
     def lookup_by_name(name):
@@ -26,6 +27,8 @@ class JobStatusEnum(Enum):
             return JobStatusEnum.ERROR
         if name == "TIMEOUT":
             return JobStatusEnum.TIMEOUT
+        if name == "COMPLETE":
+            return JobStatusEnum.COMPLETE
         # default value
         return JobStatusEnum.ERROR
 
