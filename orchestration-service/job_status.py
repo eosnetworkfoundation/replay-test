@@ -17,20 +17,23 @@ class JobStatusEnum(Enum):
     @staticmethod
     def lookup_by_name(name):
         """return correct value give a str repr of Enum"""
-        if name == "WAITING_4_WORKER":
-            return JobStatusEnum.WAITING_4_WORKER
-        if name == "STARTED":
-            return JobStatusEnum.STARTED
-        if name == "WORKING":
-            return JobStatusEnum.WORKING
-        if name == "ERROR":
-            return JobStatusEnum.ERROR
-        if name == "TIMEOUT":
-            return JobStatusEnum.TIMEOUT
-        if name == "COMPLETE":
-            return JobStatusEnum.COMPLETE
         # default value
-        return JobStatusEnum.ERROR
+        job_status_enum = JobStatusEnum.ERROR
+
+        if name == "WAITING_4_WORKER":
+            job_status_enum = JobStatusEnum.WAITING_4_WORKER
+        if name == "STARTED":
+            job_status_enum = JobStatusEnum.STARTED
+        if name == "WORKING":
+            job_status_enum = JobStatusEnum.WORKING
+        if name == "ERROR":
+            job_status_enum = JobStatusEnum.ERROR
+        if name == "TIMEOUT":
+            job_status_enum = JobStatusEnum.TIMEOUT
+        if name == "COMPLETE":
+            job_status_enum = JobStatusEnum.COMPLETE
+
+        return job_status_enum
 
 class JobStatus:
     """
