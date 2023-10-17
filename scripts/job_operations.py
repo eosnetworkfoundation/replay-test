@@ -6,6 +6,15 @@ import argparse
 import sys
 import time
 
+
+#
+# Examples
+# python3 ../job_operations.py --operation pop
+# python3 ../job_operations.py --operation update-status --status WORKING
+# python3 ../job_operations.py --operation update-status --status WORKING --job-id 4523686544
+# python3 ../job_operations.py --operation update-progress --block-processed 20 --job-id 4523686544
+#
+
 def proccess_job_update(base_url, max_tries, job_id, fields):
     """Fetches Job, Updates Job Values, and Sets the Job Status"""
 
@@ -131,7 +140,11 @@ def update_job_status(base_url, max_tries, job_id, status):
 
 def update_job_progress(base_url, max_tries, job_id, block_processed):
     """Fetch a job (GET) by id; update status to provided value"""
-    return proccess_job_update(base_url, max_tries, job_id, {'last_block_processed':block_processed})
+    fields_to_update = {
+            'status': 'WORKING',
+            'last_block_processed': block_processed
+    }
+    return proccess_job_update(base_url, max_tries, job_id, fields_to_update)
 
 def set_job_completed(base_url, max_tries, job_id, last_block_processed, end_time, integrity_hash):
     """Fetch a job (GET) by id; update job with completed details"""
@@ -196,4 +209,4 @@ if __name__ == '__main__':
     else:
         sys.exit(f"Error operation {args.operation} not supported see help")
 
-    print (job_message)
+    print (json.dumps(job_message))
