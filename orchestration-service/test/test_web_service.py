@@ -211,7 +211,7 @@ def test_status_reports(setup_module):
     assert response.status_code == 200
     assert len(response.content) > 500
     # check position arg
-    params = { 'pos': 1 }
+    params = { 'sliceid': 1 }
     response = requests.get(cntx['base_url'] + '/status',
         params=params,
         headers=cntx['json_headers'])
@@ -227,3 +227,21 @@ def test_status_reports(setup_module):
         headers=cntx['html_headers'])
     assert response.status_code == 200
     assert len(response.content) > 50
+
+def test_config_reports(setup_module):
+    """Request full status and check results"""
+    cntx = setup_module
+
+    params = { 'sliceid': 1 }
+    response = requests.get(cntx['base_url'] + '/config',
+        params=params,
+        headers=cntx['json_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 200
+
+    params = { 'sliceid': 1 }
+    response = requests.get(cntx['base_url'] + '/config',
+        params=params,
+        headers=cntx['html_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 200

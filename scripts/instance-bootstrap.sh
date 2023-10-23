@@ -33,7 +33,7 @@ fi
 
 ## packages ##
 apt update >> /dev/null
-apt install unzip jq curl
+apt install unzip jq curl python3
 
 ## aws cli ##
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -45,6 +45,9 @@ unzip awscliv2.zip
 sleep jitter
 curl http://${ORCH_IP}:${ORCH_PORT}/job\?nextjob=1 -H "Accept: application/json" > /tmp/job.conf.json
 
+START_BLOCK=$(cat /tmp/job.conf.json | python3 ./parse_json.py "start_block_num")
+END_BLOCK=$(cat /tmp/job.conf.json | python3 ./parse_json.py "end_block_num")
+LEAP_VERSION="empty"
 
 # setup
 sudo ./replay-test/scripts/nodeos-setup.sh "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPbQbXU9uyqGwpeZxjeGR3Yqw8ku5iBxaKqzZgqHhphS support@eosnetwork.com - ANY"

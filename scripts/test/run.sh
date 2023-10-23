@@ -9,7 +9,7 @@ sleep 3
 
 # now test web service
 # pop job make sure id comes back
-JOBID=$(python3 ../job_operations.py --operation pop | python3 ../parse_jobid.py)
+JOBID=$(python3 ../job_operations.py --operation pop | ../parse_jobid.sh)
 if [ -z $JOBID ]; then
   echo "Error POP Job Failed"
   # shutdown service
