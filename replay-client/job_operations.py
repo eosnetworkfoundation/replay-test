@@ -1,10 +1,10 @@
-"""Module fetches a job and reserves the status"""
-import requests
+"""Module fetches a job and reserves the status."""
 import re
 import json
 import argparse
 import sys
 import time
+import requests
 
 
 #
@@ -30,7 +30,7 @@ def proccess_job_update(base_url, max_tries, job_id, fields):
         params = { 'jobid': job_id }
 
     # data stucture we get from update_job
-    job_message = { 'status_code': None,
+    process_job_message = { 'status_code': None,
             'jobid': None,
             'json': None }
 
@@ -49,12 +49,14 @@ def proccess_job_update(base_url, max_tries, job_id, fields):
         # get open job
         job_response = requests.get(base_url + '/job',
             params=params,
-            headers=get_headers)
+            headers=get_headers,
+            timeout=3)
 
         # try again if error on get next job
         # this is rare so we report errror
         if job_response.status_code != 200:
-            print(f"Warning: request for next job failed with code {job_response.status_code}", file=sys.stderr)
+            print(f"Warning: request for next job failed with code {job_response.status_code}",
+                file=sys.stderr)
             time.sleep(backoff)
             continue
 
@@ -65,17 +67,17 @@ def proccess_job_update(base_url, max_tries, job_id, fields):
             update_job_object[key] = fields[key]
         response_etag = job_response.headers.get('ETag')
         # make a POST to update job
-        job_message = update_job(base_url, response_etag, update_job_object)
+        process_job_message = update_job(base_url, response_etag, update_job_object)
 
-        if job_message['status_code'] == 200:
+        if process_job_message['status_code'] == 200:
             update_complete = True
 
     # outside while loop
     # if job_id is None, this is get next job, return full json
     if job_id is None:
-        update_job_object['status_code'] = job_message['status_code']
+        update_job_object['status_code'] = process_job_message['status_code']
         return update_job_object
-    return job_message
+    return process_job_message
 
 def update_job(base_url, etag, job):
     """Update job with provided job object"""
@@ -84,7 +86,7 @@ def update_job(base_url, etag, job):
         'Content-Type': 'application/json',
     }
     # data stucture we will be returning
-    job_message = { 'status_code': None,
+    update_job_message = { 'status_code': None,
             'jobid': None,
             'json': None }
 
@@ -111,20 +113,23 @@ def update_job(base_url, etag, job):
         update_job_response = requests.post(base_url + '/job',
             params=params,
             headers=post_headers,
+            timeout=3,
             data=json.dumps(job))
 
         # populate data structure
-        job_message['status_code'] = update_job_response.status_code
-        job_message['jobid'] = job['job_id']
+        update_job_message['status_code'] = update_job_response.status_code
+        update_job_message['jobid'] = job['job_id']
         if update_job_response.content is not None:
-            job_message['json'] = update_job_response.content.decode('utf-8')
+            update_job_message['json'] = update_job_response.content.decode('utf-8')
 
         # good job
         if update_job_response.status_code == 200:
             update_complete = True
         # 4xx error means client issue, no retries will fix that, abort
-        elif update_job_response.status_code > 399 and update_job_response.status_code < 500:
-            print(f"Warning: update job failed with code {update_job_response.status_code}", file=sys.stderr)
+        elif update_job_response.status_code > 399 \
+            and update_job_response.status_code < 500:
+            print(f"Warning: update job failed with code {update_job_response.status_code}",
+                file=sys.stderr)
             break
         # rest and try again, assume this is service side error
         else:
@@ -132,7 +137,7 @@ def update_job(base_url, etag, job):
             time.sleep(backoff)
 
     # outside while loop
-    return job_message
+    return update_job_message
 
 def pop_job(base_url, max_tries):
     """Fetch a job (GET) that needs a worker; update status to STARTED"""
@@ -150,6 +155,7 @@ def update_job_progress(base_url, max_tries, job_id, block_processed):
     }
     return proccess_job_update(base_url, max_tries, job_id, fields_to_update)
 
+#pylint: disable=too-many-arguments
 def set_job_completed(base_url, max_tries, job_id, last_block_processed, end_time, integrity_hash):
     """Fetch a job (GET) by id; update job with completed details"""
     fields_to_update = {
@@ -161,16 +167,36 @@ def set_job_completed(base_url, max_tries, job_id, last_block_processed, end_tim
     return proccess_job_update(base_url, max_tries, job_id, fields_to_update)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='supports three different job operations pop, update-status, update-progress, and complete')
-    parser.add_argument('--port', type=int, default=4000, help='Port for web service, default 4000')
-    parser.add_argument('--host', type=str, default='0.0.0.0', help='Listening service name or ip, default 127.0.0.1')
-    parser.add_argument('--max-tries', type=int, default=10, help='Number of attemps when HTTP call fails, default 10')
-    parser.add_argument('--operation', type=str, help='call to make pop, update-status, update-progress, complete')
-    parser.add_argument('--job-id', type=int, help='id of job to update')
-    parser.add_argument('--status', type=str, help='status to set job')
-    parser.add_argument('--block-processed', type=str, help='last block processed')
-    parser.add_argument('--end-time', type=str, help='when job stopped processing')
-    parser.add_argument('--integrity-hash', type=str, help='integrity hash reported after processing completed')
+    parser = argparse.ArgumentParser(
+        description='supports 3 operations pop, update-status, update-progress, and complete'
+    )
+    parser.add_argument('--port',
+        type=int, default=4000,
+        help='Port for web service, default 4000')
+    parser.add_argument('--host',
+        type=str, default='0.0.0.0',
+        help='Listening service name or ip, default 127.0.0.1')
+    parser.add_argument('--max-tries',
+        type=int, default=10,
+        help='Number of attemps when HTTP call fails, default 10')
+    parser.add_argument('--operation',
+        type=str,
+        help='call to make pop, update-status, update-progress, complete')
+    parser.add_argument('--job-id',
+        type=int,
+        help='id of job to update')
+    parser.add_argument('--status',
+        type=str,
+        help='status to set job')
+    parser.add_argument('--block-processed',
+        type=str,
+        help='last block processed')
+    parser.add_argument('--end-time',
+        type=str,
+        help='when job stopped processing')
+    parser.add_argument('--integrity-hash',
+        type=str,
+        help='integrity hash reported after processing completed')
 
     args = parser.parse_args()
 
