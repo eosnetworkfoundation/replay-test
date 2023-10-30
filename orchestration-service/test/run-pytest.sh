@@ -23,6 +23,9 @@ rm ../../meta-data/test-modify-jobs.json
 { python3 ../web_service.py --config "../../meta-data/test-simple-jobs.json" --host 127.0.0.1 > /dev/null 2>&1 & }
 WEB_SERVICE_PID=$!
 
+# prevent tests running before service is up
+sleep 3
+
 # now test web service
 pytest test_web_service.py
 

@@ -17,7 +17,6 @@ def application(request):
     using werkzeug and python create a web application that supports
     /job
     /status
-    /restart
     /healthcheck
     """
 
@@ -112,7 +111,7 @@ def application(request):
     elif request.path == '/status':
         # Capture the Accept Type
         request_accept_type = request.headers.get('Accept')
-        replay_slice = request.args.get('pos')
+        replay_slice = request.args.get('sliceid')
         results = []
 
         # Handle URL Parameters
@@ -153,6 +152,30 @@ def application(request):
                 # Converting to simple Text format
                 content = ReportTemplate.status_html_report(results)
                 return Response(content,content_type='text/plain; charset=uft-8')
+
+    elif request.path == '/config':
+        # Capture the Accept Type
+        request_accept_type = request.headers.get('Accept')
+        slice_id = request.args.get('sliceid')
+        this_config = replay_config_manager.get(slice_id)
+
+        # only GET with param
+        if request.method == 'GET' and slice_id is not None:
+            # Format based on content type
+            # content type is None when no content-type passed in
+            # redirect strips content type
+            # HTML
+            if 'text/html' in request_accept_type:
+                # Converting to simple HTML representation (adjust as needed)
+                content = ReportTemplate.config_html_report(this_config)
+                return Response(content, content_type='text/html')
+            # JSON
+            if ('application/json' in request_accept_type or
+                '*/*' in request_accept_type or
+                request_accept_type is None):
+                # Converting from object to dictionarys to dump json
+                results_as_dict = this_config.as_dict()
+                return Response(json.dumps(results_as_dict),content_type='application/json')
 
     elif request.path == '/healthcheck':
         return Response("OK",content_type='text/plain; charset=uft-8')

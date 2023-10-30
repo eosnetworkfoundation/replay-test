@@ -55,7 +55,8 @@ def test_get_nextjob(setup_module):
     response_plain = requests.get(cntx['base_url'] + '/job', params=params, headers=cntx['plain_text_headers'])
 
     assert response_plain.status_code == 200
-    plain_text_match = re.search(r"job_id=[0-9]+, replay_slice_id=1, start_block_num=1, end_block_num=100, status=WAITING_4_WORKER, last_block_processed=0, start_time=\d+-\d+-\d+T\d+:\d+:\d+, end_time=None, actual_integrity_hash=None",
+    # print(response_plain.content.decode('utf-8'))
+    plain_text_match = re.search(r"job_id=[0-9]+, replay_slice_id=1, snapshot_path=[a-z-A-Z0-9\\.\\/\\-\\:]+, storage_type=s3, leap_version=4.0.4, start_block_num=1, end_block_num=100, status=WAITING_4_WORKER, last_block_processed=0, start_time=\d+-\d+-\d+T\d+:\d+:\d+, end_time=None, expected_integrity_hash=[A-Z0-9]+, actual_integrity_hash=None",
         response_plain.content.decode('utf-8'))
     assert plain_text_match
 
@@ -64,8 +65,8 @@ def test_get_nextjob(setup_module):
     response_json = requests.get(cntx['base_url'] + '/job', params=params, headers=cntx['json_headers'])
 
     assert response_json.status_code == 200
-    print (response_json.content.decode('utf-8'))
-    json_match = re.search(r"\{\"job_id\": [0-9]+, \"replay_slice_id\": 1, \"start_block_num\": 1, \"end_block_num\": 100, \"status\": \"WAITING_4_WORKER\", \"last_block_processed\": 0, \"start_time\": \"\d+-\d+-\d+T\d+:\d+:\d+\", \"end_time\": null, \"actual_integrity_hash\": null\}",
+    # print (response_json.content.decode('utf-8'))
+    json_match = re.search(r"\{\"job_id\": [0-9]+, \"replay_slice_id\": 1, \"snapshot_path\": \"[a-z-A-Z0-9\\.\\/\\-\\:]+\", \"storage_type\": \"s3\", \"leap_version\": \"4.0.4\", \"start_block_num\": 1, \"end_block_num\": 100, \"status\": \"WAITING_4_WORKER\", \"last_block_processed\": 0, \"start_time\": \"\d+-\d+-\d+T\d+:\d+:\d+\", \"end_time\": null, \"expected_integrity_hash\": \"[A-Z0-9]+\", \"actual_integrity_hash\": null\}",
         response_json.content.decode('utf-8'))
     assert json_match
 
@@ -211,7 +212,7 @@ def test_status_reports(setup_module):
     assert response.status_code == 200
     assert len(response.content) > 500
     # check position arg
-    params = { 'pos': 1 }
+    params = { 'sliceid': 1 }
     response = requests.get(cntx['base_url'] + '/status',
         params=params,
         headers=cntx['json_headers'])
@@ -227,3 +228,21 @@ def test_status_reports(setup_module):
         headers=cntx['html_headers'])
     assert response.status_code == 200
     assert len(response.content) > 50
+
+def test_config_reports(setup_module):
+    """Request full status and check results"""
+    cntx = setup_module
+
+    params = { 'sliceid': 1 }
+    response = requests.get(cntx['base_url'] + '/config',
+        params=params,
+        headers=cntx['json_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 200
+
+    params = { 'sliceid': 1 }
+    response = requests.get(cntx['base_url'] + '/config',
+        params=params,
+        headers=cntx['html_headers'])
+    assert response.status_code == 200
+    assert len(response.content) > 200

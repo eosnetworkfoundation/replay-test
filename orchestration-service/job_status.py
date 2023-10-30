@@ -12,22 +12,28 @@ class JobStatusEnum(Enum):
     FINISHED = "finished"
     ERROR = "error"
     TIMEOUT = "timeout"
+    COMPLETE = "complete"
 
     @staticmethod
     def lookup_by_name(name):
         """return correct value give a str repr of Enum"""
-        if name == "WAITING_4_WORKER":
-            return JobStatusEnum.WAITING_4_WORKER
-        if name == "STARTED":
-            return JobStatusEnum.STARTED
-        if name == "WORKING":
-            return JobStatusEnum.WORKING
-        if name == "ERROR":
-            return JobStatusEnum.ERROR
-        if name == "TIMEOUT":
-            return JobStatusEnum.TIMEOUT
         # default value
-        return JobStatusEnum.ERROR
+        job_status_enum = JobStatusEnum.ERROR
+
+        if name == "WAITING_4_WORKER":
+            job_status_enum = JobStatusEnum.WAITING_4_WORKER
+        if name == "STARTED":
+            job_status_enum = JobStatusEnum.STARTED
+        if name == "WORKING":
+            job_status_enum = JobStatusEnum.WORKING
+        if name == "ERROR":
+            job_status_enum = JobStatusEnum.ERROR
+        if name == "TIMEOUT":
+            job_status_enum = JobStatusEnum.TIMEOUT
+        if name == "COMPLETE":
+            job_status_enum = JobStatusEnum.COMPLETE
+
+        return job_status_enum
 
 class JobStatus:
     """
@@ -59,22 +65,30 @@ class JobStatus:
     def __repr__(self):
         return (f"JobStatus(job_id={self.job_id}, "
                 f"replay_slice_id={self.slice_config.replay_slice_id}, "
+                f"snapshot_path={self.slice_config.snapshot_path}, "
+                f"storage_type={self.slice_config.storage_type}, "
+                f"leap_version={self.slice_config.leap_version}, "
                 f"start_block_num={self.slice_config.start_block_id}, "
                 f"end_block_num={self.slice_config.end_block_id}, "
                 f"status={self.status.name}, "
                 f"last_block_processed={self.last_block_processed}, "
                 f"start_time={self.start_time}, end_time={self.end_time}, "
+                f"expected_integrity_hash={self.slice_config.expected_integrity_hash}, "
                 f"actual_integrity_hash={self.actual_integrity_hash})")
 
     def __str__(self):
         """converts job object to string"""
         return (f"job_id={self.job_id}, "
                 f"replay_slice_id={self.slice_config.replay_slice_id}, "
+                f"snapshot_path={self.slice_config.snapshot_path}, "
+                f"storage_type={self.slice_config.storage_type}, "
+                f"leap_version={self.slice_config.leap_version}, "
                 f"start_block_num={self.slice_config.start_block_id}, "
                 f"end_block_num={self.slice_config.end_block_id}, "
                 f"status={self.status.name}, "
                 f"last_block_processed={self.last_block_processed}, "
                 f"start_time={self.start_time}, end_time={self.end_time}, "
+                f"expected_integrity_hash={self.slice_config.expected_integrity_hash}, "
                 f"actual_integrity_hash={self.actual_integrity_hash}")
 
     def as_dict(self):
@@ -82,12 +96,16 @@ class JobStatus:
         this_dict = {}
         this_dict['job_id'] = self.job_id
         this_dict['replay_slice_id'] = self.slice_config.replay_slice_id
+        this_dict['snapshot_path'] = self.slice_config.snapshot_path
+        this_dict['storage_type'] = self.slice_config.storage_type
+        this_dict['leap_version'] = self.slice_config.leap_version
         this_dict['start_block_num'] = self.slice_config.start_block_id
         this_dict['end_block_num'] = self.slice_config.end_block_id
         this_dict['status'] = self.status.name
         this_dict['last_block_processed'] = self.last_block_processed
         this_dict['start_time'] = self.start_time
         this_dict['end_time'] = self.end_time
+        this_dict['expected_integrity_hash'] = self.slice_config.expected_integrity_hash
         this_dict['actual_integrity_hash'] = self.actual_integrity_hash
         return this_dict
 
