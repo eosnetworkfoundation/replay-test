@@ -9,7 +9,7 @@ sleep 3
 
 # now test web service
 # pop job make sure id comes back
-JOBID=$(python3 ../job_operations.py --operation pop | ../parse_jobid.sh)
+JOBID=$(python3 ../../replay-client/job_operations.py --operation pop | python3 ../../replay-client/parse_json.py job_id )
 if [ -z $JOBID ]; then
   echo "Error POP Job Failed"
   # shutdown service
@@ -25,7 +25,7 @@ if [ $COUNT -ne 1 ]; then
   exit 1
 fi
 # check status changed
-python3 ../job_operations.py --operation update-status --status WORKING --job-id $JOBID
+python3 ../../replay-client/job_operations.py --operation update-status --status WORKING --job-id $JOBID
 COUNT=$(curl -s http://127.0.0.1:4000/job\?jobid\=${JOBID} | grep WORKING | wc -l)
 if [ $COUNT -ne 1 ]; then
   echo "ERROR Job did not have WORKING status"
@@ -33,7 +33,7 @@ if [ $COUNT -ne 1 ]; then
   kill "$WEB_SERVICE_PID"
   exit 1
 fi
-python3 ../job_operations.py --operation update-progress --block-processed 20 --job-id $JOBID
+python3 ../../replay-client/job_operations.py --operation update-progress --block-processed 20 --job-id $JOBID
 if [ $? -eq 0 ]; then
    echo "SUCCESS"
 fi

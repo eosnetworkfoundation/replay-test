@@ -71,6 +71,10 @@ def proccess_job_update(base_url, max_tries, job_id, fields):
             update_complete = True
 
     # outside while loop
+    # if job_id is None, this is get next job, return full json
+    if job_id is None:
+        update_job_object['status_code'] = job_message['status_code']
+        return update_job_object
     return job_message
 
 def update_job(base_url, etag, job):
