@@ -6,8 +6,10 @@ v4_DEB_FILE="leap_""${LEAP_VERSION}"-"${OS}""_amd64.deb"
 v5_DEB_FILE="leap_""${LEAP_VERSION}""_amd64.deb"
 if [ ${LEAP_VERSION:0:1} == "4" ]; then
   DEB_URL="https://github.com/AntelopeIO/leap/releases/download/v""${LEAP_VERSION}"/"${v4_DEB_FILE}"
+  DEB_FILE=${v4_DEB_FILE}
 else
   DEB_URL="https://github.com/AntelopeIO/leap/releases/download/v""${LEAP_VERSION}"/"${v5_DEB_FILE}"
+  DEB_FILE=${v5_DEB_FILE}
 fi
 
 TUID=$(id -ur)

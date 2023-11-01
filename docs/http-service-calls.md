@@ -3,41 +3,51 @@
 ## Summary
 - job - gets/sets configuration data for the replay nodes
 - status - gets a replay nodes progress and state
+- config - get the configuration data used to initialize the job
 - healthcheck - gets 200/0K always
 
 ## Job
-A GET or POST request with the path '/job'. The '/job' GET request it can take a URL parameter of 'nextjob' with no value or a URL parameter of 'jobid' with an value.
+A GET or POST request with the path `/job`. The `/job` GET request it can take a URL parameter of `nextjob` with no value or a URL parameter of `jobid` with an value.
+*Note:* `/job` will return `replay_slice_id`, this value can be used as the `sliceid` parameter for `/status` and `/config` to check status or look up the job's configuration information.
 
 ### GET
-When 'nextjob' parameter is present the web application calls jobs.get_next_job() and returns the results in the body with a HTTP 200 code.
-When the 'jobid' parameter is present the web application will call jobs.get_job(jobid) and returns the results in the body with an HTTP 200 code.
-When no parameters are provided the web applications issues a 301 redirect to '/job?nextjob'
-If the Accepts header of the GET request is 'text/plain; charset=us-ascii' the results are formated as text string.
-If the Accepts header of the GET request is 'application/json' the results are formated as json.
+When `nextjob` parameter is present the web application returns all the information needed to perform the job in the body with a HTTP 200 code.
+When the `jobid` parameter is present the web application returns the current status of the job as results in the body with an HTTP 200 code.
+When no parameters are provided the web applications issues a 301 redirect to `/job?nextjob`
+- If the Accepts header of the GET request is `text/plain; charset=us-ascii` the results are formatted as text string.
+- If the Accepts header of the GET request is `application/json` the results are formatted as json.
 
 ### POST
-The '/job' POST request must have a URL parameter for 'job' with a value.
+The `/job` POST request must have a URL parameter for 'job' with a value.
 If no parameter is present a 404 error is returned.
-The content-type of the POST request is always 'application/json'.
+The content-type of the POST request is always `application/json`.
 The body of the POST request contains JSON which is parsed into a
-dictionary named updated_values and passed to the method 'job.set_job(updated_values)'
+dictionary and stored into the memory of the web application.
 
 ## Status
-'/status' GET and POST requests take zero or one parameter 'pos'. Pos will allow filtering to a slice.
+`/status` GET requests take zero or one parameter `sliceid`. This allows filtering to a slice.
+*Note:* status will return `replay_slice_id`, this value can be used as the `sliceid` parameter for `/status` and `/config`
 
 ### GET
-For the GET request when parameter 'pos' is present call return the status for the job at that array position.
-If the if Accepts header is text-html returns html
-if Accepts header is application/json returns json
-if Accepts header is text/plain return a string
-For the GET request when there are no parameters
-call 'jobs.get_all()' and return statuses for all jobs.
-If Accepts header is text-html returns html
-if Accepts header is application/json returns json
-if Accepts header is text/plain return a string
+For the GET request when parameter `sliceid` is present call return the status for the job handling the give replay slice.
+- If the Accepts header is text-html returns html
+- If Accepts header is application/json returns json
+- If Accepts header is text/plain return a string
+For the GET request when there are no parameters return statuses for all jobs. Returning all status respected same accepts encoding an per slice configuration.
 
-### POST
-The POST request '/status' must have a jobid parameter and value.
-For the POST request parse the json in the body as a
-dictionary and pass the dictionary to 'jobs.set_job(data)'
-When the POST request has no URL parameters return 404
+## Config
+`/config` GET requests take one parameter `sliceid`. The `sliceid` must be specified
+*Note:* status will return `replay_slice_id`, this value can be used as the `sliceid` parameter for `/status` and `/config`
+
+### GET
+For the GET returns the configuration details for the given replay slice.
+- If the Accepts header is text-html returns html
+- If Accepts header is application/json returns json
+For the GET request when there are no parameters return statuses for all jobs. Returning all status respected same accepts encoding an per slice configuration.
+
+## Healthcheck
+Always returns same value used for healthchecks
+
+### GET
+Only get request is supported. Always returns body of `OK` with status `200`
+- Only returns `text/plain utf-8` encoded content. 

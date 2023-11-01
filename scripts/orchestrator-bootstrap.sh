@@ -8,7 +8,7 @@ sudo ./aws/install
 
 # get the scripts
 git clone https://github.com/eosnetworkfoundation/replay-test
-pip install datetime enum argparse werkzeug
+pip install datetime argparse werkzeug
 
 cd replay-test/orchestration-service || exit
 python3 ./web_service.py --config "../meta-data/test-simple-jobs.json" --host 0.0.0.0 &

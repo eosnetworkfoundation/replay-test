@@ -15,9 +15,10 @@ Runs unit tests for the python classes, and runs an integration test for the web
 
 The last test `test_web_service.py` can be flaky, and if you see *connection refused* errors try re-running the test.
 The web service test will start up a web service on loopback, 127.0.0.1 port 4000.
-You will see three tests suits run and pass with multiple tests.
 
 ```
+sudo apt install -y unzip python3 python3-pip
+pip install datetime argparse werkzeug
 cd orchestration-service/test
 ./run-pytest.sh
 ```
@@ -36,13 +37,14 @@ The web service test will start up a web service on loopback, 127.0.0.1 port 400
 Look for `SUCCESS` as the very last output from the script.
 
 ```
-cd scripts/tests
+sudo apt install -y unzip python3 python3-pip
+pip install datetime argparse werkzeug
+cd replay-client/tests
 ./run.sh
 ```
 
 ### Details
 `run.sh` shows an example of using `job_operations.py` from a shell script.
-
 
 ## Manually Run
 You can manually run the web service, and perform operations while watching an HTML status page.

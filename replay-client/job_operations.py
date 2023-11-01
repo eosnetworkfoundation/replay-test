@@ -174,7 +174,7 @@ if __name__ == '__main__':
         type=int, default=4000,
         help='Port for web service, default 4000')
     parser.add_argument('--host',
-        type=str, default='0.0.0.0',
+        type=str, default='127.0.0.1',
         help='Listening service name or ip, default 127.0.0.1')
     parser.add_argument('--max-tries',
         type=int, default=10,
