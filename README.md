@@ -12,11 +12,13 @@ For a description of the HTTP calls supported by the orchestrator see [HTTP Serv
 First you need to setup an orchestrator, then you need to setup your relay nodes. Best way to do this is through the AWS portal. Not sure of the roles and permissions you need to start these services. If you would like to configure your own launch template see [AWS Host Setup](AWS-Host-Setup.md)
 
 To setup your orchestrator node. Go to EC2 Instances
-![EC2Instance](docs/images/CDEC2Instance.png){width=600px height=237px}
+![EC2Instance](docs/images/CDEC2Instance.png)
+
 Select launch instance from template
-![LaunchTemplace](docs/images/CDLaunchTemplate.png){width=600px height=237px}
+![LaunchTemplace](docs/images/CDLaunchTemplate.png)
+
 Select `LowEndOrchestrator` and use the default template.
-![OrchTemplaceSelect](docs/images/CDOrchTemplateSelect.png){width=600px height=237px}
+![OrchTemplaceSelect](docs/images/CDOrchTemplateSelect.png)
 
 ## Updating Orchestrator Job Configuration
 Be default the setup will spin up a webservice with [test data](meta-data/test-simple-jobs.json). To change the job configuration you need to create your own JSON configuration, and restart the service to use the new JSON.
@@ -30,11 +32,13 @@ Be default the setup will spin up a webservice with [test data](meta-data/test-s
 You can spin up as many replay nodes as you need. Each replay node is designed to use one replay slice configuration as provided in the JSON configuration file. If you have 100 replay slices configured you can utilize up to 100 replay hosts.
 
 To setup your orchestrator node. Go to EC2 Instances
-![CDEC2Instance](docs/images/CDEC2Instance.png){width=600px height=237px}
+![CDEC2Instance](docs/images/CDEC2Instance.png)
+
 Select launch instance from template
-![LaunchTemplace](docs/images/CDLaunchTemplate.png){width=600px height=237px}
+![LaunchTemplace](docs/images/CDLaunchTemplate.png)
+
 Select `ChickenReplayHost` and use the default template.
-![ReplayTemplaceSelect](docs/images/CDReplayTemplateSelect.png){width=600px height=237px}
+![ReplayTemplaceSelect](docs/images/CDReplayTemplateSelect.png)
 
 Once your replay host is setup you need to ssh into the host and start the job.
 - Grab the private IP of the orchestrator node
