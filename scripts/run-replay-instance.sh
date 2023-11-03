@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+
+####
+## OUT OF DATE FOR EXAMPLE ONLY
+####
 aws ec2 run-instances --image-id ami-053b0d53c279acc90 \
 --instance-type t2.micro \
 --security-group-ids sg-04f895bd6442b69b5 \

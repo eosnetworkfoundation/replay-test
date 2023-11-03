@@ -12,26 +12,22 @@ else
   DEB_FILE=${v5_DEB_FILE}
 fi
 
-TUID=$(id -ur)
-# must be root to run
-if [ "$TUID" -ne 0 ]; then
-  echo "Must run as root"
-  exit
-fi
-
 ## root setup ##
 # clean out un-needed files
-for not_needed_deb_file in /tmp/leap_[0-9]*.deb
+for not_needed_deb_file in "${HOME:?}"/leap_*.deb
 do
-  if [ "${not_needed_deb_file}" != /tmp/"${DEB_FILE}" ]; then
+  if [ "${not_needed_deb_file}" != "${HOME:?}"/"${DEB_FILE}" ]; then
     echo "removing ${not_needed_deb_file}"
     rm -rf ${not_needed_deb_file}
   fi
 done
 
 # download file if needed
-if [ ! -f /tmp/"${DEB_FILE}" ]; then
-  wget --directory-prefix=/tmp "${DEB_URL}"
+if [ ! -f "${HOME:?}"/"${DEB_FILE}" ]; then
+  wget --directory-prefix=${HOME} "${DEB_URL}"
 fi
-# install nodeos
-dpkg -i /tmp/"${DEB_FILE}"
+
+# install nodeos locally
+[ -d "${HOME:?}"/nodeos ] && rm -rf "${HOME:?}"/nodeos
+mkdir "${HOME:?}"/nodeos
+dpkg -x "${HOME:?}"/"${DEB_FILE}" "${HOME:?}"/nodeos

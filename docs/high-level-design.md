@@ -32,7 +32,6 @@ UpdateRelStyle(replayD, orchestrator, $offsetY="-35", $offsetX="+30")
 Rel(replayD, orchestrator, "gets jobs/sets status", "HTTP")
 ```
 
-
 ## Sequence
 Fairly straight forward, the relay host picks up a job, and updates the jobs status while it works through the lifecycle. The relay host will update the progress by updating the last block processed. Full list of status is found here. https://github.com/eosnetworkfoundation/replay-test/blob/311f13439542542c0b24e313a26a012eb59a8a6c/orchestration-service/job_status.py#L9-L15
 

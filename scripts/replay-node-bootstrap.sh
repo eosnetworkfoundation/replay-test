@@ -1,78 +1,47 @@
 #!/usr/bin/env bash
 
-ORCH_IP="${1}"
-ORCH_PORT=4000
-
-function trap_exit() {
-  if [ -n "${JOBID}" ]; then
-    python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
-  fi
-  echo "caught signal exiting"
-  exit 127
-}
-
-## set status to error if we exit ##
-trap trap_exit EXIT
-
-## directories ##
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-REPLAY_CLIENT_DIR=${SCRIPT_DIR}/replay-test/replay-client
+# User-Data Script
+# Run as root off launch template
 
 ## packages ##
-sudo apt update >> /dev/null
-sudo apt install -y git unzip jq curl python3
+apt-get update >> /dev/null
+apt-get install -y git unzip jq curl python3
 
 ## aws cli ##
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+unzip /tmp/awscliv2.zip -d /tmp/ >> /dev/null
+/tmp/aws/install
+rm -rf /tmp/aws /tmp/awscliv2.zip
 
-## get the scripts ##
-git clone https://github.com/eosnetworkfoundation/replay-test
+## new user ##
+USER="enf-replay"
+PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPbQbXU9uyqGwpeZxjeGR3Yqw8ku5iBxaKqzZgqHhphS support@eosnetwork.com - ANY"
 
-## create enf-user ##
-sudo ${REPLAY_CLIENT_DIR}/adduser.sh \
-   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPbQbXU9uyqGwpeZxjeGR3Yqw8ku5iBxaKqzZgqHhphS support@eosnetwork.com - ANY"
-
-## get the job ##
-## need job details to get leap version
-## leap deb install requires root
-## once leap install is complete we switch to enf-user
-python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation pop > /tmp/job.conf.json
-
-STATUS=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "status_code")
-if [ $STATUS -ne 200 ]; then
-  echo "FAILED TO AQUITE JOB"
-  exit 127
+## does the user already exist ##
+if getent passwd "${USER}" > /dev/null 2>&1; then
+    echo "yes the user exists"
+    exit 0
+else
+    echo "Creating user ${USER}"
 fi
 
-## Parse from json ###
-JOBID=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "job_id")
-START_BLOCK=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "start_block_num")
-END_BLOCK=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "end_block_num")
-REPLAY_SLICE_ID=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "replay_slice_id")
-SNAPSHOT_PATH=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "snapshot_path")
-STORAGE_TYPE=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "storage_type")
-EXPECTED_INTEGRITY_HASH=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "expected_integrity_hash")
-LEAP_VERSION=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "leap_version")
+KEY_SIZE=$(echo "${PUBLIC_KEY}" | cut -d' ' -f2 | wc -c)
+if [ "$KEY_SIZE" -lt 33 ]; then
+    echo "Invalid public key"
+    exit 1
+fi
 
-## install the versions of nodeos we might need ##
-sudo ${REPLAY_CLIENT_DIR}/install-nodeos.sh "${LEAP_VERSION}"
+## gecos non-interactive ##
+adduser "${USER}" --disabled-password --gecos ""
+sudo -u "${USER}" -- sh -c "mkdir /home/enf-replay/.ssh && chmod 700 /home/enf-replay/.ssh && touch /home/enf-replay/.ssh/authorized_keys && chmod 600 /home/enf-replay/.ssh/authorized_keys"
+echo "$PUBLIC_KEY" | sudo -u "${USER}" tee -a /home/enf-replay/.ssh/authorized_keys
 
-## install scripts to enf-replay users ##
-sudo -u enf-replay sh -c 'cd /home/enf-replay && git clone https://github.com/eosnetworkfoundation/replay-test'
-## setup directories for enf-user ##
-sudo -u enf-replay /home/enf-replay/replay-test/replay-client/create-nodeos-dir-struct.sh /home/enf-replay/replay-test/config/config.ini
+## setup data device ##
+echo "setting up ext4 /dev/xvdb volume"
+mkdir /data
+mkfs.ext4 /dev/xvdb
+mount -o rw,acl,user_xattr /dev/xvdb /data
+chmod 777 /data
 
-## all done with sudo access ##
-## switch over to local user ##
-## run replay , run nodeos as local user ##
-sudo -u enf-replay /home/enf-replay/replay-test/replay-client/start-nodeos-run-replay.sh "${JOBID}" \
-  "${STORAGE_TYPE}" \
-  "${SNAPSHOT_PATH}" \
-  "${REPLAY_SLICE_ID}" \
-  "${START_BLOCK}" \
-  "${END_BLOCK}" \
-  "${EXPECTED_INTEGRITY_HASH}" \
-  "${ORCH_IP}" \
-  "${ORCH_PORT}"
+## git scripts for enf-user ##
+sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-test

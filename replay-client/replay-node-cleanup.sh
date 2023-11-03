@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
 
-TUID=$(id -ur)
 USER="enf-replay"
-
-# must be root to run
-if [ "$TUID" -ne 0 ]; then
-  echo "Must run as root"
-  exit
-fi
 
 # aggressivley terminate nodeos
 # start nicely then get mean
@@ -21,11 +14,8 @@ do
 done
 
 # remove package
-dpkg -r leap
+rm /home/${USER:?}/*.deb
 
 # clean out directory
 rm -rf /home/"${USER:?}"/*
 rm -rf /home/"${USER:?}"/.*
-
-# remove user
-sudo deluser "${USER:?}"
