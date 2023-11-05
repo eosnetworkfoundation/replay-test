@@ -88,11 +88,14 @@ python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${OR
 
 zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
 
-## path to nodeos set using nodes install script ##
-nodeos \
-   --config-dir "${NODEOS_DIR}"/config/ \
-   --data-dir "${NODEOS_DIR}"/data/ \
-   --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
-   --truncate-at-block ${END_BLOCK} &> "${NODEOS_DIR}"/log/nodeos.log &
+## load from snapshot ##
+nodeos --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
+  --data-dir "${NODEOS_DIR}"/data/ \
+  &> "${NODEOS_DIR}"/log/nodeos.log
+
+#nodeos \
+#    --config-dir "${NODEOS_DIR}"/config/ \
+#    --data-dir "${NODEOS_DIR}"/data/
+#    --truncate-at-block ${END_BLOCK} &> "${NODEOS_DIR}"/log/nodeos.log
 
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "FINISHED" --job-id ${JOBID}

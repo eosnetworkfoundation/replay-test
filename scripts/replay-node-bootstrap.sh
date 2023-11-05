@@ -39,8 +39,8 @@ echo "$PUBLIC_KEY" | sudo -u "${USER}" tee -a /home/enf-replay/.ssh/authorized_k
 ## setup data device ##
 echo "setting up ext4 /dev/xvdb volume"
 mkdir /data
-mkfs.ext4 /dev/xvdb
-mount -o rw,acl,user_xattr /dev/xvdb /data
+mkfs.ext4 /dev/nvme1n1
+mount -o rw,acl,user_xattr /dev/nvme1n1 /data
 chmod 777 /data
 
 ## git scripts for enf-user ##
