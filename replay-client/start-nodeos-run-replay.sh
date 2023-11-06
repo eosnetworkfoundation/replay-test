@@ -16,7 +16,7 @@ ORCH_IP="${1:-127.0.0.1}"
 ORCH_PORT="${2:-4000}"
 
 REPLAY_CLIENT_DIR=/home/enf-replay/replay-test/replay-client
-CONFIG=/home/enf-replay/replay-test/config/config.ini
+CONFIG_DIR=/home/enf-replay/replay-test/config
 NODEOS_DIR=/data/nodeos
 
 function trap_exit() {
@@ -42,13 +42,13 @@ if [ "$TUID" -eq 0 ]; then
 fi
 ## data volume must be large enough ##
 volsize=$(df -h /data | awk 'NR==2 {print $4}' | sed 's/G//' | cut -d. -f1)
-if [ ${volsize:-0} -lt 20 ]; then
-  echo "/data volume does not exist or does not have 20Gb free space"
+if [ ${volsize:-0} -lt 40 ]; then
+  echo "/data volume does not exist or does not have 40Gb free space"
   exit 127
 fi
 
 ## directory setup ##
-"${REPLAY_CLIENT_DIR:?}"/create-nodeos-dir-struct.sh "${CONFIG}"
+"${REPLAY_CLIENT_DIR:?}"/create-nodeos-dir-struct.sh "${CONFIG_DIR}"
 
 ## get job details ##
 ## need job details to get leap version and copy snapshot
@@ -59,6 +59,7 @@ if [ $STATUS -ne 200 ]; then
   echo "Failed to aquire job"
   exit 127
 fi
+echo "Received job details processing..."
 
 ## Parse from json ###
 JOBID=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "job_id")
@@ -77,6 +78,7 @@ export PATH
 
 ## copy snapshot ##
 if [ $STORAGE_TYPE = "s3" ]; then
+  echo "Copying snapshot to localhost"
   aws s3 cp "${SNAPSHOT_PATH}" "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
 else
   python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
@@ -84,18 +86,53 @@ else
   exit 127
 fi
 
+echo "Job status updated to WORKING"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "WORKING" --job-id ${JOBID}
 
+echo "Unzip snapshot"
 zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
 
 ## load from snapshot ##
-nodeos --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
-  --data-dir "${NODEOS_DIR}"/data/ \
-  &> "${NODEOS_DIR}"/log/nodeos.log
+## sync till block ##
+echo "Start nodeos and sync till ${END_BLOCK}"
+nodeos \
+     --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
+     --data-dir "${NODEOS_DIR}"/data/ \
+     --config "${CONFIG_DIR}"/sync-config.ini \
+     --terminate-at-block ${END_BLOCK} \
+     &> "${NODEOS_DIR}"/log/nodeos.log
 
-#nodeos \
-#    --config-dir "${NODEOS_DIR}"/config/ \
-#    --data-dir "${NODEOS_DIR}"/data/
-#    --truncate-at-block ${END_BLOCK} &> "${NODEOS_DIR}"/log/nodeos.log
+## restart to get details ##
+echo "Restart nodeos readonly mode"
+nodeos \
+     --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
+     --data-dir "${NODEOS_DIR}"/data/ \
+     --config "${CONFIG_DIR}"/readonly-config.ini \
+     --terminate-at-block ${END_BLOCK} \
+     &>> "${NODEOS_DIR}"/log/nodeos.log &
+NODEOS_PID=$!
 
-python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "FINISHED" --job-id ${JOBID}
+echo "Getting integrity hash and head block num"
+END_TIME=$(date '+%Y-%m-%dT%H:%M:%S')
+
+ACTUAL_INTEGRITY_HASH=$(curl -s http://127.0.0.1:8888/v1/producer/get_integrity_hash | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "integrity_hash")
+GET_HASH_STATUS=$?
+
+HEAD_BLOCK_NUM=$(curl -s http://127.0.0.1:8888/v1/chain/get_info | python3 replay-test/replay-client/parse_json.py "head_block_num")
+GET_BLOCK_STATUS=$?
+
+if [ $GET_HASH_STATUS -ne 0 ] || [ $GET_BLOCK_STATUS -ne 0 ]; then
+  python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
+fi
+
+## terminate nodeos we have what we need ##
+echo "Terminating nodoes"
+kill $NODEOS_PID
+
+## complete status ##
+echo "Sending COMPLETE status"
+python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
+    --operation complete --job-id ${JOBID} \
+    --block-processed $HEAD_BLOCK_NUM \
+    --end-time "${END_TIME}" \
+    --integrity-hash "${ACTUAL_INTEGRITY_HASH}"

@@ -13,6 +13,9 @@ do
   fi
 done
 
+# remove data
+rm -rf /data/nodeos
+
 # remove package
 rm /home/${USER:?}/*.deb
 
