@@ -105,20 +105,20 @@ nodeos \
 ## restart to get details ##
 echo "Restart nodeos readonly mode"
 nodeos \
-     --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
      --data-dir "${NODEOS_DIR}"/data/ \
      --config "${CONFIG_DIR}"/readonly-config.ini \
-     --terminate-at-block ${END_BLOCK} \
      &>> "${NODEOS_DIR}"/log/nodeos.log &
 NODEOS_PID=$!
 
+## allow time for nodoes to start up ## 
+sleep 30
 echo "Getting integrity hash and head block num"
 END_TIME=$(date '+%Y-%m-%dT%H:%M:%S')
 
 ACTUAL_INTEGRITY_HASH=$(curl -s http://127.0.0.1:8888/v1/producer/get_integrity_hash | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "integrity_hash")
 GET_HASH_STATUS=$?
 
-HEAD_BLOCK_NUM=$(curl -s http://127.0.0.1:8888/v1/chain/get_info | python3 replay-test/replay-client/parse_json.py "head_block_num")
+HEAD_BLOCK_NUM=$(curl -s http://127.0.0.1:8888/v1/chain/get_info | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "head_block_num")
 GET_BLOCK_STATUS=$?
 
 if [ $GET_HASH_STATUS -ne 0 ] || [ $GET_BLOCK_STATUS -ne 0 ]; then
