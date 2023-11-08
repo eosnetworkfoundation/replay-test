@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 # integration tests start up service
-{ python3 ../../orchestration-service/web_service.py --config "../../meta-data/test-simple-jobs.json" --host 127.0.0.1 > /dev/null 2>&1 & }
+cp ../../meta-data/test-simple-jobs.json ../../meta-data/test-modify-jobs.json
+
+{ python3 ../../orchestration-service/web_service.py --config "../../meta-data/test-modify-jobs.json" --host 127.0.0.1 > /dev/null 2>&1 & }
 WEB_SERVICE_PID=$!
 
 # prevent tests from running before web service is up
@@ -35,8 +37,21 @@ if [ $COUNT -ne 1 ]; then
 fi
 python3 ../job_operations.py --host 127.0.0.1 --operation update-progress --block-processed 20 --job-id $JOBID
 if [ $? -eq 0 ]; then
-   echo "SUCCESS"
+   echo "JOB OPERATIONS TESTS PASSED"
 fi
 
-# shutdown service
+# run config operation to update integrity hash
+python3 ../config_operations.py --host 127.0.0.1 --operation update --end-block-num 324302525 --integrity-hash NANANANANANA
+
+DIFF_CNT=$(diff ../../meta-data/test-simple-jobs.json ../../meta-data/test-modify-jobs.json | grep "^>" | wc -l)
+if [ "$DIFF_CNT" -lt 1 ]; then
+  echo "ERROR integrity hash in meta-data file was not modified"
+  cat ../../meta-data/test-modify-jobs.json
+  exit 1
+fi
+echo "CONFIG OPERATIONS TESTS PASSED"
+
+
+# shutdown service and cleanup
 kill "$WEB_SERVICE_PID"
+rm ../../meta-data/test-modify-jobs.json

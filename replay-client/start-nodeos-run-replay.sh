@@ -3,14 +3,20 @@
 #
 # This script runs a replay job, updating status on orchestration service
 # 1) performs file setup: create dirs, get snapshot to load
-# 2) pulls in job details from orchestration service
+# 2) http GET job details from orchestration service, incls. block range
 # 3) local non-priv install of nodeos
-# 4) runs the replay
+# 4) starts nodeos loads the snapshot and terminates
+# 5) get replay details from logs
+# 6) http POST completed status for configured block range
 # Communicates to orchestration service via HTTP
-# Dependancy on aws client, python3, curl, and large volume under /data
+# Dependency on aws client, python3, curl, and large volume under /data
+#
+# Final status report available via HTTP showing all good
+#    OR
+# Final status shows block ranges with mismatched integrity hashes
 #
 # Author: Eric Passmore
-# Date: Nov 5th 2023
+# Date: Nov 6th 2023
 
 ORCH_IP="${1:-127.0.0.1}"
 ORCH_PORT="${2:-4000}"
@@ -20,6 +26,9 @@ CONFIG_DIR=/home/enf-replay/replay-test/config
 NODEOS_DIR=/data/nodeos
 
 function trap_exit() {
+  if [ -n "${BACKGROUND_STATUS_PID}" ]; then
+    kill ${BACKGROUND_STATUS_PID}
+  fi
   if [ -n "${JOBID}" ]; then
     python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
   fi
@@ -31,6 +40,9 @@ function trap_exit() {
 trap trap_exit INT
 trap trap_exit TERM
 
+##################
+# 1) performs file setup: create dirs, get snapshot to load
+#################
 ## who we are ##
 USER=enf-replay
 TUID=$(id -ur)
@@ -50,7 +62,9 @@ fi
 ## directory setup ##
 "${REPLAY_CLIENT_DIR:?}"/create-nodeos-dir-struct.sh "${CONFIG_DIR}"
 
-## get job details ##
+#################
+# 2) http GET job details from orchestration service, incls. block range
+#################
 ## need job details to get leap version and copy snapshot
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation pop > /tmp/job.conf.json
 
@@ -71,7 +85,9 @@ STORAGE_TYPE=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.
 EXPECTED_INTEGRITY_HASH=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "expected_integrity_hash")
 LEAP_VERSION=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "leap_version")
 
-## setup nodeos ##
+#################
+# 3) local non-priv install of nodeos
+#################
 "${REPLAY_CLIENT_DIR:?}"/install-nodeos.sh $LEAP_VERSION
 PATH=${PATH}:${HOME}/nodeos/usr/bin
 export PATH
@@ -81,58 +97,65 @@ if [ $STORAGE_TYPE = "s3" ]; then
   echo "Copying snapshot to localhost"
   aws s3 cp "${SNAPSHOT_PATH}" "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
 else
-  python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
+  python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
+        --operation update-status --status "ERROR" --job-id ${JOBID}
   echo "Unknown snapshot type ${STORAGE_TYPE}"
   exit 127
 fi
 
-echo "Job status updated to WORKING"
-python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "WORKING" --job-id ${JOBID}
-
 echo "Unzip snapshot"
 zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
 
-## load from snapshot ##
-## sync till block ##
-echo "Start nodeos and sync till ${END_BLOCK}"
+## update status that snapshot is loading ##
+echo "Job status updated to LOADING_SNAPSHOT"
+python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
+        --operation update-status --status "LOADING_SNAPSHOT" --job-id ${JOBID}
+
+#################
+# 4) starts nodeos loads the snapshot, syncs to end block, and terminates
+#################
+## sync till start block ##
+echo "Start nodeos and sync till ${START_BLOCK}"
+
+## update status when snapshot is complete: updates last block processed ##
+## Background process grep logs on fixed interval secs ##
+${REPLAY_CLIENT_DIR}/background_status_update.sh $ORCH_IP $ORCH_PORT $JOBID "$NODEOS_DIR" &
+BACKGROUND_STATUS_PID=$!
+
+sleep 5
 nodeos \
      --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
      --data-dir "${NODEOS_DIR}"/data/ \
      --config "${CONFIG_DIR}"/sync-config.ini \
      --terminate-at-block ${END_BLOCK} \
+     --integrity-hash-on-start \
+     --integrity-hash-on-stop \
      &> "${NODEOS_DIR}"/log/nodeos.log
-
-## restart to get details ##
-echo "Restart nodeos readonly mode"
-nodeos \
-     --data-dir "${NODEOS_DIR}"/data/ \
-     --config "${CONFIG_DIR}"/readonly-config.ini \
-     &>> "${NODEOS_DIR}"/log/nodeos.log &
-NODEOS_PID=$!
-
-## allow time for nodoes to start up ## 
 sleep 30
-echo "Getting integrity hash and head block num"
+kill $BACKGROUND_STATUS_PID
+
+#################
+# 5) get replay details from logs
+#################
+echo "Reached End Block ${END_BLOCK}, getting nodeos state details "
 END_TIME=$(date '+%Y-%m-%dT%H:%M:%S')
+START_BLOCK_ACTUAL_INTEGRITY_HASH=$("${REPLAY_CLIENT_DIR:?}"/get_integrity_hash_from_log.sh "started" "$NODEOS_DIR")
+END_BLOCK_ACTUAL_INTEGRITY_HASH=$("${REPLAY_CLIENT_DIR:?}"/get_integrity_hash_from_log.sh "stopped" "$NODEOS_DIR")
+HEAD_BLOCK_NUM=$("${REPLAY_CLIENT_DIR:?}"/head_block_num_from_log.sh "${NODEOS_DIR}")
 
-ACTUAL_INTEGRITY_HASH=$(curl -s http://127.0.0.1:8888/v1/producer/get_integrity_hash | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "integrity_hash")
-GET_HASH_STATUS=$?
+##
+# POST back to config with expected integrity hash
+python3 "${REPLAY_CLIENT_DIR:?}"/config_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
+   --slice-id $REPLAY_SLICE_ID \
+   --end-block-num "$START_BLOCK" --integrity_hash "$START_BLOCK_ACTUAL_INTEGRITY_HASH"
 
-HEAD_BLOCK_NUM=$(curl -s http://127.0.0.1:8888/v1/chain/get_info | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "head_block_num")
-GET_BLOCK_STATUS=$?
 
-if [ $GET_HASH_STATUS -ne 0 ] || [ $GET_BLOCK_STATUS -ne 0 ]; then
-  python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
-fi
-
-## terminate nodeos we have what we need ##
-echo "Terminating nodoes"
-kill $NODEOS_PID
-
-## complete status ##
+#################
+# 9) http POST completed status for configured block range
+#################
 echo "Sending COMPLETE status"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
     --operation complete --job-id ${JOBID} \
     --block-processed $HEAD_BLOCK_NUM \
     --end-time "${END_TIME}" \
-    --integrity-hash "${ACTUAL_INTEGRITY_HASH}"
+    --integrity-hash "${END_BLOCK_ACTUAL_INTEGRITY_HASH}"

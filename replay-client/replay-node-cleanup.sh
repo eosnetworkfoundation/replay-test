@@ -18,7 +18,3 @@ rm -rf /data/nodeos
 
 # remove package
 rm /home/${USER:?}/*.deb
-
-# clean out directory
-rm -rf /home/"${USER:?}"/*
-rm -rf /home/"${USER:?}"/.*

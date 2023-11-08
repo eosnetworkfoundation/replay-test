@@ -53,9 +53,11 @@ li { padding: .5em }
         <li> Last Block Processed: {this_slice.last_block_processed}</li>
         <li> Start Time: {this_slice.start_time}</li>
         <li> End Time: {this_slice.end_time}</li>
-        <li> Integrity Hash: {this_slice.actual_integrity_hash}</li>
         <li> Start Block: {this_slice.slice_config.start_block_id}</li>
         <li> End Block: {this_slice.slice_config.end_block_id}</li>
+        <li> Start Block Integrity Hash: {this_slice.start_block_integrity_hash}</li>
+        <li> End Block Integrity Hash: {this_slice.actual_integrity_hash}</li>
+        <li> Expected End Block Integ Hash: {this_slice.slice_config.expected_integrity_hash}<li>
     </ul>
 """
 
@@ -82,9 +84,11 @@ li { padding: .5em }
     Last Block Processed: {this_slice.last_block_processed}
     Start Time: {this_slice.start_time}
     End Time: {this_slice.end_time}
-    Integrity Hash: {this_slice.actual_integrity_hash}
     Start Block: {this_slice.slice_config.start_block_id}
-    End Block: {this_slice.slice_config.end_block_id}\n"""
+    End Block: {this_slice.slice_config.end_block_id}
+    Start Block Integrity Hash: {this_slice.start_block_integrity_hash}
+    End Block Integrity Hash: {this_slice.actual_integrity_hash}
+    Expected End Block Integ Hash: {this_slice.slice_config.expected_integrity_hash}\n"""
 
     @staticmethod
     def status_text_footer():
@@ -135,7 +139,7 @@ li { padding: .5em }
         <li> End Block Id: {this_slice.end_block_id}</li>
         <li> Snapshot Path: {this_slice.snapshot_path}</li>
         <li> Storage Type: {this_slice.storage_type}</li>
-        <li> Expected Integrity Hash: {this_slice.expected_integrity_hash}</li>
+        <li> End Block Expected Integrity Hash: {this_slice.expected_integrity_hash}</li>
         <li> Leap Version: {this_slice.leap_version}</li>
     </ul>
 """

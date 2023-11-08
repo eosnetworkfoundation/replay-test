@@ -8,8 +8,8 @@ class JobStatusEnum(Enum):
     """Job Lifecyle as Enum"""
     WAITING_4_WORKER = "waiting_4_worker"
     STARTED = "started"
+    LOADING_SNAPSHOT = "loading_snapshot"
     WORKING = "working"
-    FINISHED = "finished"
     ERROR = "error"
     TIMEOUT = "timeout"
     COMPLETE = "complete"
@@ -24,6 +24,8 @@ class JobStatusEnum(Enum):
             job_status_enum = JobStatusEnum.WAITING_4_WORKER
         if name == "STARTED":
             job_status_enum = JobStatusEnum.STARTED
+        if name == "LOADING_SNAPSHOT":
+            job_status_enum = JobStatusEnum.LOADING_SNAPSHOT
         if name == "WORKING":
             job_status_enum = JobStatusEnum.WORKING
         if name == "ERROR":
@@ -41,7 +43,7 @@ class JobStatus:
     primary key is an integer `job_id`
     has the following properties
     `replay_slice_id` integer FK linked to `BlockManger.replay_slice_id`
-    `status` enum of waiting_4_worker, started, working, finished, error, timeout
+    `status` enum of waiting_4_worker, started, working, complete, error, timeout
         initialized to waiting_4_worker
     `last_block_processed` block id of last block processed
         initialized to 0
@@ -61,6 +63,7 @@ class JobStatus:
         self.start_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
         self.end_time = None
         self.actual_integrity_hash = None
+        self.start_block_integrity_hash = None
 
     def __repr__(self):
         return (f"JobStatus(job_id={self.job_id}, "
@@ -73,6 +76,7 @@ class JobStatus:
                 f"status={self.status.name}, "
                 f"last_block_processed={self.last_block_processed}, "
                 f"start_time={self.start_time}, end_time={self.end_time}, "
+                f"start_block_integrity_hash={self.start_block_integrity_hash}, "
                 f"expected_integrity_hash={self.slice_config.expected_integrity_hash}, "
                 f"actual_integrity_hash={self.actual_integrity_hash})")
 
@@ -88,6 +92,7 @@ class JobStatus:
                 f"status={self.status.name}, "
                 f"last_block_processed={self.last_block_processed}, "
                 f"start_time={self.start_time}, end_time={self.end_time}, "
+                f"start_block_integrity_hash={self.start_block_integrity_hash}, "
                 f"expected_integrity_hash={self.slice_config.expected_integrity_hash}, "
                 f"actual_integrity_hash={self.actual_integrity_hash}")
 
@@ -105,6 +110,7 @@ class JobStatus:
         this_dict['last_block_processed'] = self.last_block_processed
         this_dict['start_time'] = self.start_time
         this_dict['end_time'] = self.end_time
+        this_dict['start_block_integrity_hash'] = self.start_block_integrity_hash
         this_dict['expected_integrity_hash'] = self.slice_config.expected_integrity_hash
         this_dict['actual_integrity_hash'] = self.actual_integrity_hash
         return this_dict

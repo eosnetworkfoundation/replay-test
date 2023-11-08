@@ -33,7 +33,7 @@ Rel(replayD, orchestrator, "gets jobs/sets status", "HTTP")
 ```
 
 ## Sequence
-Fairly straight forward, the relay host picks up a job, and updates the jobs status while it works through the lifecycle. The relay host will update the progress by updating the last block processed. Full list of status is found here. https://github.com/eosnetworkfoundation/replay-test/blob/311f13439542542c0b24e313a26a012eb59a8a6c/orchestration-service/job_status.py#L9-L15
+Fairly straight forward, the relay host picks up a job, and updates the jobs status while it works through the lifecycle. The relay host will update the progress by updating the last block processed. Full list of status is found here. https://github.com/eosnetworkfoundation/replay-test/blob/main/orchestration-service/job_status.py#L8-L15
 
 ```mermaid
 
@@ -44,6 +44,8 @@ sequenceDiagram
     Orch->>Relay: json_job
     Relay->>Orch: POST /job status=STARTED
     Orch->>Relay: 200 SUCCESS
+    Relay->>Orch: POST /job status=SNAPSHOT_LOADING
+    Orch->>Relay: 200 SUCCESS
     Relay->>Orch: POST /job status=WORKING
     Orch->>Relay: 200 SUCCESS
     Relay->>Orch: POST /job last_block_processed=XXXX
@@ -51,3 +53,23 @@ sequenceDiagram
     Relay->>Orch: POST /job status=COMPLETE, actual_integrity_hash=SHA_256, end_time=, last_block_processed=XXXX
     Orch->>Relay: 200 SUCCESS
 ```
+
+## Details Steps for Replay
+`replay-client/start-nodeos-run-replay.sh` a replay job, and updating status on orchestration service.
+1. performs file setup: create dirs, get snapshot to load
+2. http GET job details from orchestration service, incls. block range
+3. local non-priv install of nodeos
+4. starts nodeos loads the snapshot and terminates
+5. get replay details from logs
+6. http POST completed status for configured block range
+
+Communicates to orchestration service via HTTP
+
+## Replay Dependencies
+Dependency on aws client, python3, curl, and large volume under /data
+
+## Final Report
+Final report show either All OK, or shows
+- Final status report available via HTTP showing all good
+- Final status shows block ranges with mismatched integrity hashes
+In addition the final report show percentage complete in terms of blocks processes against total blocks that need to be processed. The final report is cached and generated every 4 minutes.

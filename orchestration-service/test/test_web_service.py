@@ -55,8 +55,8 @@ def test_get_nextjob(setup_module):
     response_plain = requests.get(cntx['base_url'] + '/job', params=params, headers=cntx['plain_text_headers'])
 
     assert response_plain.status_code == 200
-    # print(response_plain.content.decode('utf-8'))
-    plain_text_match = re.search(r"job_id=[0-9]+, replay_slice_id=1, snapshot_path=[a-z-A-Z0-9\\.\\/\\-\\:]+, storage_type=s3, leap_version=4.0.4, start_block_num=1, end_block_num=100, status=WAITING_4_WORKER, last_block_processed=0, start_time=\d+-\d+-\d+T\d+:\d+:\d+, end_time=None, expected_integrity_hash=[A-Z0-9]+, actual_integrity_hash=None",
+    print(response_plain.content.decode('utf-8'))
+    plain_text_match = re.search(r"job_id=[0-9]+, replay_slice_id=1, snapshot_path=[a-z-A-Z0-9\\.\\/\\-\\:]+, storage_type=s3, leap_version=[rcdev0-9\\.\\-]+, start_block_num=[0-9]+, end_block_num=[0-9]+, status=WAITING_4_WORKER, last_block_processed=0, start_time=\d+-\d+-\d+T\d+:\d+:\d+, end_time=None, start_block_integrity_hash=None, expected_integrity_hash=[A-Za-z0-9]+, actual_integrity_hash=None",
         response_plain.content.decode('utf-8'))
     assert plain_text_match
 
@@ -66,7 +66,7 @@ def test_get_nextjob(setup_module):
 
     assert response_json.status_code == 200
     # print (response_json.content.decode('utf-8'))
-    json_match = re.search(r"\{\"job_id\": [0-9]+, \"replay_slice_id\": 1, \"snapshot_path\": \"[a-z-A-Z0-9\\.\\/\\-\\:]+\", \"storage_type\": \"s3\", \"leap_version\": \"4.0.4\", \"start_block_num\": 1, \"end_block_num\": 100, \"status\": \"WAITING_4_WORKER\", \"last_block_processed\": 0, \"start_time\": \"\d+-\d+-\d+T\d+:\d+:\d+\", \"end_time\": null, \"expected_integrity_hash\": \"[A-Z0-9]+\", \"actual_integrity_hash\": null\}",
+    json_match = re.search(r"\{\"job_id\": [0-9]+, \"replay_slice_id\": 1, \"snapshot_path\": \"[a-z-A-Z0-9\\.\\/\\-\\:]+\", \"storage_type\": \"s3\", \"leap_version\": \"[rcdev0-9\\.\\-]+\", \"start_block_num\": [0-9]+, \"end_block_num\": [0-9]+, \"status\": \"WAITING_4_WORKER\", \"last_block_processed\": 0, \"start_time\": \"\d+-\d+-\d+T\d+:\d+:\d+\", \"end_time\": null, \"start_block_integrity_hash\": null, \"expected_integrity_hash\": \"[A-Za-z0-9]+\", \"actual_integrity_hash\": null\}",
         response_json.content.decode('utf-8'))
     assert json_match
 
@@ -246,3 +246,37 @@ def test_config_reports(setup_module):
         headers=cntx['html_headers'])
     assert response.status_code == 200
     assert len(response.content) > 200
+
+def test_post_config(setup_module):
+    """Update Config"""
+    cntx = setup_module
+
+    config = {
+        "end_block_num": 324302525,
+        "integrity_hash": "NANANANANAN",
+    }
+
+    params = { 'sliceid': 3 }
+    responseBefore = requests.get(cntx['base_url'] + '/config',
+        params=params,
+        headers=cntx['json_headers'])
+    assert responseBefore.status_code == 200
+    configBefore = json.loads(responseBefore.content.decode('utf-8'))
+    assert configBefore['expected_integrity_hash'] != config['integrity_hash']
+
+    # make POST call; json passed in as string
+    update_config_response = requests.post(cntx['base_url'] + '/config',
+        headers=cntx['json_headers'],
+        timeout=3,
+        data=json.dumps(config))
+    assert update_config_response.status_code == 200
+
+    params = { 'sliceid': 3 }
+    responseAfter = requests.get(cntx['base_url'] + '/config',
+        params=params,
+        headers=cntx['json_headers'])
+    assert responseAfter.status_code == 200
+    configAfter = json.loads(responseAfter.content.decode('utf-8'))
+
+    # all references should have the same value
+    assert configAfter['expected_integrity_hash'] != configBefore['expected_integrity_hash']

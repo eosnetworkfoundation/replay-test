@@ -177,6 +177,25 @@ def application(request):
                 results_as_dict = this_config.as_dict()
                 return Response(json.dumps(results_as_dict),content_type='application/json')
 
+        elif request.method == 'POST':
+            # posted json body end_block_id and integrity_hash
+            # return sliceid and message
+            data = request.get_json()
+            if not data:
+                return Response("Invalid JSON data", status=400)
+
+            block = replay_config_manager.return_record_by_end_block_id(int(data['end_block_num']))
+            block.expected_integrity_hash = data['integrity_hash']
+            replay_config_manager.set(block)
+            replay_config_manager.persist()
+
+            response_message = {
+                'sliceid': block.replay_slice_id,
+                'message': 'updated integrity hash'
+            }
+
+            return Response(json.dumps(response_message),content_type='application/json')
+
     elif request.path == '/healthcheck':
         return Response("OK",content_type='text/plain; charset=uft-8')
 
