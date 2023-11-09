@@ -61,7 +61,8 @@ sequenceDiagram
 3. local non-priv install of nodeos
 4. starts nodeos loads the snapshot and terminates
 5. get replay details from logs
-6. http POST completed status for configured block range
+6. restart nodeos read-only mode to get final integrity hash
+7. http POST completed status for configured block range
 
 Communicates to orchestration service via HTTP
 

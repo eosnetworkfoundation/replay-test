@@ -5,9 +5,10 @@
 # 1) performs file setup: create dirs, get snapshot to load
 # 2) http GET job details from orchestration service, incls. block range
 # 3) local non-priv install of nodeos
-# 4) starts nodeos loads the snapshot and terminates
+# 4) starts nodeos loads the snapshot and terminates at specified end block
 # 5) get replay details from logs
-# 6) http POST completed status for configured block range
+# 6) restart nodeos read-only mode to get final integrity hash
+# 7) http POST completed status for configured block range
 # Communicates to orchestration service via HTTP
 # Dependency on aws client, python3, curl, and large volume under /data
 #
@@ -140,18 +141,34 @@ kill $BACKGROUND_STATUS_PID
 echo "Reached End Block ${END_BLOCK}, getting nodeos state details "
 END_TIME=$(date '+%Y-%m-%dT%H:%M:%S')
 START_BLOCK_ACTUAL_INTEGRITY_HASH=$("${REPLAY_CLIENT_DIR:?}"/get_integrity_hash_from_log.sh "started" "$NODEOS_DIR")
-END_BLOCK_ACTUAL_INTEGRITY_HASH=$("${REPLAY_CLIENT_DIR:?}"/get_integrity_hash_from_log.sh "stopped" "$NODEOS_DIR")
 HEAD_BLOCK_NUM=$("${REPLAY_CLIENT_DIR:?}"/head_block_num_from_log.sh "${NODEOS_DIR}")
+
+#################
+# 6) restart nodeos read-only mode to get final integrity hash
+#################
+nodeos \
+     --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
+     --data-dir "${NODEOS_DIR}"/data/ \
+     --config "${CONFIG_DIR}"/readonly-config.ini \
+     --terminate-at-block ${END_BLOCK} \
+     --integrity-hash-on-start \
+     --integrity-hash-on-stop \
+     &> "${NODEOS_DIR}"/log/nodeos.log &
+BACKGROUND_NODEOS_PID=$!
+sleep 30
+
+END_BLOCK_ACTUAL_INTEGRITY_HASH=$(curl -s http://127.0.0.1:8888/v1/producer/get_integrity_hash | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "integrity_hash")
 
 ##
 # POST back to config with expected integrity hash
 python3 "${REPLAY_CLIENT_DIR:?}"/config_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
-   --slice-id $REPLAY_SLICE_ID \
    --end-block-num "$START_BLOCK" --integrity_hash "$START_BLOCK_ACTUAL_INTEGRITY_HASH"
 
+# terminate read only nodeos in background
+kill $BACKGROUND_NODEOS_PID
 
 #################
-# 9) http POST completed status for configured block range
+# 7) http POST completed status for configured block range
 #################
 echo "Sending COMPLETE status"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
