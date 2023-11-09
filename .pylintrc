@@ -1,3 +1,8 @@
+[MESSAGES CONTROL]
+
+disable=duplicate-code
+
 [DESIGN]
 
-max-locals=18
+max-locals=19
+max-attributes=12

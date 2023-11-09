@@ -2,6 +2,7 @@
 import json
 import argparse
 import sys
+import time
 import requests
 
 def update_by_end_block(base_url, max_tries, end_block_num, integrity_hash):
@@ -10,7 +11,6 @@ def update_by_end_block(base_url, max_tries, end_block_num, integrity_hash):
     post_headers = {
         'Content-Type': 'application/json',
     }
-    params = {}
 
     # 100 milisecs double every loop
     backoff = 0.1
@@ -94,7 +94,7 @@ if __name__ == '__main__':
         sys.exit(f"Error invalid operation: {args.operation}")
     if args.operation == 'update' and \
         (args.integrity_hash is None or args.end_block_num is None):
-        sys.exit(f"Must specifify integrity hash and end block num with update operation")
+        sys.exit("Must specifify integrity hash and end block num with update operation")
     if args.max_tries < 1:
         sys.exit("Error max-tries must be greater then zero")
 
