@@ -57,12 +57,13 @@ sequenceDiagram
 ## Details Steps for Replay
 `replay-client/start-nodeos-run-replay.sh` a replay job, and updating status on orchestration service.
 1. performs file setup: create dirs, get snapshot to load
-2. http GET job details from orchestration service, incls. block range
+2. GET job details from orchestration service, incls. block range
 3. local non-priv install of nodeos
 4. starts nodeos loads the snapshot and terminates
-5. get replay details from logs
+5. replay transactions from local blocks.log or networked peers
 6. restart nodeos read-only mode to get final integrity hash
-7. http POST completed status for configured block range
+7. POST completed status for configured block range
+8. retain blocks logs copy over to cloud storage
 
 Communicates to orchestration service via HTTP
 

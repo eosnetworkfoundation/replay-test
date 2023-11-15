@@ -6,9 +6,10 @@
 # 2) http GET job details from orchestration service, incls. block range
 # 3) local non-priv install of nodeos
 # 4) starts nodeos loads the snapshot and terminates at specified end block
-# 5) get replay details from logs
+# 5) replay transactions from local blocks.log or networked peers
 # 6) restart nodeos read-only mode to get final integrity hash
 # 7) http POST completed status for configured block range
+# 8) retain blocks logs copy over to cloud storage
 # Communicates to orchestration service via HTTP
 # Dependency on aws client, python3, curl, and large volume under /data
 #
@@ -103,6 +104,9 @@ else
   echo "Unknown snapshot type ${STORAGE_TYPE}"
   exit 127
 fi
+# restore blocks.log from cloud storage
+echo "Restoring Blocks.log from Cloud Storage"
+"${REPLAY_CLIENT_DIR:?}"/manage_blocks_log.sh "$NODEOS_DIR" "restore" $START_BLOCK $END_BLOCK "${SNAPSHOT_PATH}"
 
 echo "Unzip snapshot"
 zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
@@ -131,7 +135,7 @@ nodeos \
      --terminate-at-block ${END_BLOCK} \
      --integrity-hash-on-start \
      --integrity-hash-on-stop \
-     &> "${NODEOS_DIR}"/log/nodeos.log
+     &> "${NODEOS_DIR}"/log/nodeos-sync.log
 sleep 30
 kill $BACKGROUND_STATUS_PID
 
@@ -153,7 +157,7 @@ nodeos \
      --terminate-at-block ${END_BLOCK} \
      --integrity-hash-on-start \
      --integrity-hash-on-stop \
-     &> "${NODEOS_DIR}"/log/nodeos.log &
+     &> "${NODEOS_DIR}"/log/nodeos-readonly.log &
 BACKGROUND_NODEOS_PID=$!
 sleep 30
 
@@ -176,3 +180,9 @@ python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${OR
     --block-processed $HEAD_BLOCK_NUM \
     --end-time "${END_TIME}" \
     --integrity-hash "${END_BLOCK_ACTUAL_INTEGRITY_HASH}"
+
+#################
+# 8) retain block log copy over to cloud storage
+# retain - copies from local host to cloud storage
+#################
+"${REPLAY_CLIENT_DIR:?}"/manage_blocks_log.sh "$NODEOS_DIR" "retain" $START_BLOCK $END_BLOCK "${SNAPSHOT_PATH}"
