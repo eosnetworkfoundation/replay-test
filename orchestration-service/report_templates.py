@@ -3,6 +3,26 @@ class ReportTemplate:
     """Static method for reports. Headers, footers, and item listings"""
 
     @staticmethod
+    def home_html_report():
+        """HTML HOME Page"""
+        content = ReportTemplate.status_html_header()
+        content += f"""
+        <!DOCTYPE html>
+<html>
+<body>
+<title>Chicken Dance Index Page</title>
+<h2>Chicken Dance Index Page</h2>
+<a href="/status">Status</a>: shows current jobs and status of each job</br>
+<a href="/config?sliceid=1">Config</a>: must specify a sliceid, detailed config supporting job</br>
+<a href="/summary">Result Summary</a>: progress or final summary</br>
+Job: get and set job configuration. Requires jobid param. Not available on this page.
+</body>
+</html>
+        """
+        content += ReportTemplate.status_html_footer()
+        return content
+
+    @staticmethod
     def status_html_report(results):
         """HTML Report"""
         # Converting to simple HTML representation (adjust as needed)
@@ -147,4 +167,62 @@ li { padding: .5em }
     @staticmethod
     def config_html_footer():
         """HTML Footer For Config Report"""
+        return "</body></html>"
+
+    @staticmethod
+    def summary_text_header():
+        """Plain Text Header for Summary Report"""
+        return "      SUMMARY REPORT              \n-------------------------------------\n"
+
+    @staticmethod
+    def summary_text_report():
+        """Plain Text Summary Report"""
+        content = ReportTemplate.summary_text_header()
+        content += "empty"
+        content += ReportTemplate.summary_text_footer()
+        return content
+
+    @staticmethod
+    def summary_text_footer():
+        """Plain Text Header for Summary Report"""
+        return "--------------- END ------------------\n"
+
+    @staticmethod
+    def summary_html_header():
+        """HTML Header for Summary Report"""
+"""<!DOCTYPE html>
+<html>
+<head>
+<title>Summary Report</title>
+<style>
+ul {
+background: #d7e5fe;
+border: 1px solid;
+border-color: #f61e09;
+border-top: .5rem solid #f61e09;
+border-top-left-radius: 5px;
+border-bottom-left-radius: 5px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 5px;
+width: 32em;
+}
+li { padding: .5em }
+</style>
+</head>
+
+<body>
+<h2>Summary Report</h2>
+"""
+
+    @staticmethod
+    def summary_html_report():
+        """HTML Summary Report"""
+        content = ReportTemplate.summary_html_header()
+        content += "empty"
+        content += ReportTemplate.summary_html_footer()
+        return content
+
+    @staticmethod
+    def config_html_footer():
+        """HTML Footer For Summary Report"""
         return "</body></html>"
