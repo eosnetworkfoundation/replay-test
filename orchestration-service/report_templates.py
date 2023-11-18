@@ -6,7 +6,7 @@ class ReportTemplate:
     def home_html_report():
         """HTML HOME Page"""
         content = ReportTemplate.status_html_header()
-        content += f"""
+        content += """
         <!DOCTYPE html>
 <html>
 <body>
@@ -175,10 +175,11 @@ li { padding: .5em }
         return "      SUMMARY REPORT              \n-------------------------------------\n"
 
     @staticmethod
-    def summary_text_report():
+    def summary_text_report(data):
         """Plain Text Summary Report"""
         content = ReportTemplate.summary_text_header()
-        content += "empty"
+        content += f"{data.blocks_processed} block processed out of {data.total_blocks}<br/>"
+        content += f"{data.blocks_processed*100/data.total_blocks}% block processed<br/>"
         content += ReportTemplate.summary_text_footer()
         return content
 
@@ -190,7 +191,7 @@ li { padding: .5em }
     @staticmethod
     def summary_html_header():
         """HTML Header for Summary Report"""
-"""<!DOCTYPE html>
+        return """<!DOCTYPE html>
 <html>
 <head>
 <title>Summary Report</title>
@@ -214,15 +215,22 @@ li { padding: .5em }
 <h2>Summary Report</h2>
 """
 
+    # 'total_blocks': total_blocks,
+    # 'blocks_processed': blocks_processed,
+    # 'total_jobs': total_jobs,
+    # 'jobs_succeeded': jobs_succeeded,
+    # 'jobs_failed': jobs_failed,
+    # 'failed_jobs': failed_jobs
     @staticmethod
-    def summary_html_report():
+    def summary_html_report(data):
         """HTML Summary Report"""
         content = ReportTemplate.summary_html_header()
-        content += "empty"
+        content += f"{data.blocks_processed} block processed out of {data.total_blocks}<br/>"
+        content += f"{data.blocks_processed*100/data.total_blocks}% block processed<br/>"
         content += ReportTemplate.summary_html_footer()
         return content
 
     @staticmethod
-    def config_html_footer():
+    def summary_html_footer():
         """HTML Footer For Summary Report"""
         return "</body></html>"

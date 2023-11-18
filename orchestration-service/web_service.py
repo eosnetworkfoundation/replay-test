@@ -11,47 +11,46 @@ from job_status import JobManager
 
 def create_summary():
     """Creates data object for summary report"""
-    total_blocks = 0
-    blocks_processed = 0
-    total_jobs = 0
-    jobs_succeeded = 0
-    jobs_failed = 0
-    failed_jobs = []
+    data = {
+        'total_blocks': 0,
+        'blocks_processed': 0,
+        'total_jobs': 0,
+        'jobs_succeeded': 0,
+        'jobs_failed': 0,
+        'failed_jobs': []
+    }
     for this_job in jobs.get_all().items():
         # caculate progress
-        total_blocks += this_job.slice_config.end_block_id - this_job.slice_config.start_block_id
+        if this_job.slice_config.end_block_id > this_job.slice_config.start_block_id \
+          and this_job.slice_config.start_block_id > 0:
+            data['total_blocks'] += this_job.slice_config.end_block_id \
+                - this_job.slice_config.start_block_id
         if this_job.last_block_processed > 0:
-            blocks_processed += this_job.last_block_processed - this_job.slice_config.start_block_id
+            data['blocks_processed'] += this_job.last_block_processed \
+                - this_job.slice_config.start_block_id
 
         # calculate jobs
-        total_jobs += 1
+        data['total_jobs'] += 1
         if this_job.status.name == "COMPLETE":
             if this_job.slice_config.expected_integrity_hash == this_job.actual_integrity_hash:
-                jobs_succeeded += 1
+                data['jobs_succeeded'] += 1
             else:
-                jobs_failed += 1
-                failed_jobs.append(
+                data['jobs_failed'] += 1
+                data['failed_jobs'].append(
                     {
                     'status': 'COMPLETE',
                     'jobid': this_job.job_id ,
                     'configid': this_job.slice_config.replay_slice_id
                     })
-        if this_job.status.name == "ERROR" or this_job.status.name == "TIMEOUT":
-                jobs_failed += 1
-                failed_jobs.append(
-                    {
-                    'status': 'COMPLETE',
-                    'jobid': this_job.job_id ,
-                    'configid': this_job.slice_config.replay_slice_id
-                    })
-        return {
-            'total_blocks': total_blocks,
-            'blocks_processed': blocks_processed,
-            'total_jobs': total_jobs,
-            'jobs_succeeded': jobs_succeeded,
-            'jobs_failed': jobs_failed,
-            'failed_jobs': failed_jobs
-        }
+        if this_job.status.name in ("ERROR", "TIMEOUT"):
+            data['jobs_failed'] += 1
+            data['failed_jobs'].append(
+            {
+                'status': 'COMPLETE',
+                'jobid': this_job.job_id ,
+                'configid': this_job.slice_config.replay_slice_id
+            })
+        return data
 
 @Request.application
 # pylint: disable=too-many-return-statements disable=too-many-branches
@@ -80,9 +79,6 @@ def application(request):
     Accept  {request.headers.get('Accept')}
     ETag {request.headers.get('ETag')}""")
     if request.path == '/job':
-        # capture Accept Header
-        request_accept_type = request.headers.get('Accept')
-
         # Work through GET Requests first
         if request.method == 'GET':
 
@@ -104,15 +100,15 @@ def application(request):
             # content type is None when no content-type passed in
             # redirect strips content type
             # DEFAULT and PLAIN TEXT
-            if ('text/plain; charset=utf-8' in request_accept_type or
-                'text/plain' in request_accept_type or
-                '*/*' in request_accept_type or
-                request_accept_type is None):
+            if ('text/plain; charset=utf-8' in request.headers.get('Accept') or
+                'text/plain' in request.headers.get('Accept') or
+                '*/*' in request.headers.get('Accept') or
+                request.headers.get('Accept') is None):
                 response = Response(str(result), content_type='text/plain; charset=utf-8')
                 response.headers['ETag'] = etag_value
                 return response
             # JSON
-            if 'application/json' in request_accept_type:
+            if 'application/json' in request.headers.get('Accept'):
                 response = Response(json.dumps(result.as_dict()), content_type='application/json')
                 response.headers['ETag'] = etag_value
                 return response
@@ -153,8 +149,6 @@ def application(request):
             return Response("Invalid job JSON data", status=400)
 
     elif request.path == '/status':
-        # Capture the Accept Type
-        request_accept_type = request.headers.get('Accept')
         replay_slice = request.args.get('sliceid')
         results = []
 
@@ -179,27 +173,25 @@ def application(request):
             # content type is None when no content-type passed in
             # redirect strips content type
             # HTML
-            if 'text/html' in request_accept_type:
+            if 'text/html' in request.headers.get('Accept'):
                 # Converting to simple HTML representation (adjust as needed)
                 content = ReportTemplate.status_html_report(results)
                 return Response(content, content_type='text/html')
             # JSON
-            if 'application/json' in request_accept_type:
+            if 'application/json' in request.headers.get('Accept'):
                 # Converting from object to dictionarys to dump json
                 results_as_dict = [obj.as_dict() for obj in results]
                 return Response(json.dumps(results_as_dict),content_type='application/json')
             # DEFAULT and PLAIN TEXT
-            if ('text/plain; charset=utf-8' in request_accept_type or
-                'text/plain' in request_accept_type or
-                '*/*' in request_accept_type or
-                request_accept_type is None):
+            if ('text/plain; charset=utf-8' in request.headers.get('Accept') or
+                'text/plain' in request.headers.get('Accept') or
+                '*/*' in request.headers.get('Accept') or
+                request.headers.get('Accept') is None):
                 # Converting to simple Text format
                 content = ReportTemplate.status_html_report(results)
                 return Response(content,content_type='text/plain; charset=uft-8')
 
     elif request.path == '/config':
-        # Capture the Accept Type
-        request_accept_type = request.headers.get('Accept')
         slice_id = request.args.get('sliceid')
         this_config = replay_config_manager.get(slice_id)
 
@@ -209,14 +201,14 @@ def application(request):
             # content type is None when no content-type passed in
             # redirect strips content type
             # HTML
-            if 'text/html' in request_accept_type:
+            if 'text/html' in request.headers.get('Accept'):
                 # Converting to simple HTML representation (adjust as needed)
                 content = ReportTemplate.config_html_report(this_config)
                 return Response(content, content_type='text/html')
             # JSON
-            if ('application/json' in request_accept_type or
-                '*/*' in request_accept_type or
-                request_accept_type is None):
+            if ('application/json' in request.headers.get('Accept') or
+                '*/*' in request.headers.get('Accept') or
+                request.headers.get('Accept') is None):
                 # Converting from object to dictionarys to dump json
                 results_as_dict = this_config.as_dict()
                 return Response(json.dumps(results_as_dict),content_type='application/json')
@@ -248,26 +240,25 @@ def application(request):
         return Response(content, content_type='text/html')
 
     elif request.path == '/summary':
-        request_accept_type = request.headers.get('Accept')
         report_obj = create_summary()
         # Format based on content type
         # content type is None when no content-type passed in
         # HTML
-        if 'text/html' in request_accept_type:
+        if 'text/html' in request.headers.get('Accept'):
             # Converting to simple HTML representation (adjust as needed)
-            content = ReportTemplate.summary_html_report(report_obj)
-            return Response(content, content_type='text/html')
+            return Response(ReportTemplate.summary_html_report(report_obj), \
+                content_type='text/html')
         # JSON
-        if 'application/json' in request_accept_type:
+        if 'application/json' in request.headers.get('Accept'):
             return Response(json.dumps(report_obj),content_type='application/json')
         # DEFAULT and PLAIN TEXT
-        if ('text/plain; charset=utf-8' in request_accept_type or
-            'text/plain' in request_accept_type or
-            '*/*' in request_accept_type or
-            request_accept_type is None):
+        if ('text/plain; charset=utf-8' in request.headers.get('Accept') or
+            'text/plain' in request.headers.get('Accept') or
+            '*/*' in request.headers.get('Accept') or
+            request.headers.get('Accept') is None):
             # Converting to simple Text format
-            content = ReportTemplate.summary_text_report(report_obj)
-            return Response(content,content_type='text/plain; charset=uft-8')
+            return Response(ReportTemplate.summary_text_report(report_obj), \
+                content_type='text/plain; charset=uft-8')
 
     return Response("Not found", status=404)
 
