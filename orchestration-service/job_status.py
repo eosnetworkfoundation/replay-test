@@ -139,7 +139,7 @@ class JobManager:
         return self.jobs
 
     # needed my own integer check function
-    # `isinstance` was too strict 
+    # `isinstance` was too strict
     # pylint prefered `isinstance` over `type` check
     def is_integer(self, string):
         """custom check if is int"""
