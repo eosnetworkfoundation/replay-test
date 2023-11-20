@@ -38,7 +38,7 @@ S3_PATH=$(echo "${S3_DIR}" | sed 's#s3://##' | cut -d'/' -f2-)
 S3_FILE=blocks-${START_BLOCK_NUM}-${END_BLOCK_NUM}.log
 
 # does S3 file exist
-aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_PATH"/"$S3_FILE" 2>/dev/null || NOT_EXIST=true
+aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_PATH"/"$S3_FILE" > /dev/null 2>&1 || NOT_EXIST=true
 
 if [ "$OPERATION" == "retain" ]; then
   if [ $NOT_EXIST ]; then

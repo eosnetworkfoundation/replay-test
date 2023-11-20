@@ -1,0 +1,10 @@
+[
+  {
+    "start_block_id": 8918217,
+    "end_block_id": 8918220,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-08-01-16-eos-v6-0008918217.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "f0601ae6b69d5fd67db823e0a6ec8402bf35359e2bca6cac4d8388160fc8054e",
+    "leap_version": "5.0.0-rc2"
+  }
+]

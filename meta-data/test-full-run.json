@@ -1,0 +1,130 @@
+[
+  {
+    "start_block_id": 0000041758,
+    "end_block_id": 0001214428,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-06-10-16-eos-v6-0000041758.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0001214428,
+    "end_block_id": 0002420083,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-06-17-16-eos-v6-0001214428.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0002420083,
+    "end_block_id": 0002939735,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-06-24-16-eos-v6-0002420083.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0002939735,
+    "end_block_id": 0004148297,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-06-27-16-eos-v6-0002939735.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0004148297,
+    "end_block_id": 0004836535,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-07-04-16-eos-v6-0004148297.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0004836535,
+    "end_block_id": 0005350461,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-07-08-16-eos-v6-0004836535.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0005350461,
+    "end_block_id": 0006035586,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-07-11-16-eos-v6-0005350461.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0006035586,
+    "end_block_id": 0006540975,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-07-15-16-eos-v6-0006035586.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0006540975,
+    "end_block_id": 0007212134,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-07-18-16-eos-v6-0006540975.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0007212134,
+    "end_block_id": 0007724035,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-07-22-16-eos-v6-0007212134.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0007724035,
+    "end_block_id": 0008407163,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-07-25-16-eos-v6-0007724035.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0008407163,
+    "end_block_id": 0008918217,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-07-29-16-eos-v6-0008407163.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0008918217,
+    "end_block_id": 0008918220,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2018-08-01-16-eos-v6-0008918217.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "f0601ae6b69d5fd67db823e0a6ec8402bf35359e2bca6cac4d8388160fc8054e",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0323611371,
+    "end_block_id": 0323784127,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2023-08-02-16-eos-v6-0323611371.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0323784127,
+    "end_block_id": 0323956925,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2023-08-03-16-eos-v6-0323784127.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "",
+    "leap_version": "5.0.0-rc2"
+  },
+  {
+    "start_block_id": 0323956925,
+    "end_block_id": 324302525,
+    "snapshot_path": "s3://chicken-dance/test/snapshots/snapshot-2023-08-04-16-eos-v6-0323956925.bin.zst",
+    "storage_type": "s3",
+    "expected_integrity_hash": "b4c09c7cb91d17a8422c924e6e44a1bce76012acbe2f7949104613b4155ffb8b",
+    "leap_version": "5.0.0-rc2"
+  }
+]

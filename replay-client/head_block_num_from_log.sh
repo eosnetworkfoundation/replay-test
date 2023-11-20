@@ -3,14 +3,12 @@
 NODEOS_DIR=${1:-/data/nodeos}
 
 # blocks log
-BLOCK_NUM_FROM_LOG=$(tail -50 "${NODEOS_DIR}"/log/nodeos.log | \
-    grep controller.cpp | \
+BLOCK_NUM_FROM_LOG=$(grep controller.cpp "${NODEOS_DIR}"/log/nodeos.log | \
     grep replay | grep "of" \
     | cut -d']' -f2 | cut -d' ' -f2 | tail -1)
 
 # replay via peer
-BLOCK_NUM_FROM_REPLAY=$(tail -50 "${NODEOS_DIR}"/log/nodeos.log | \
-    grep 'net_plugin.cpp:' | \
+BLOCK_NUM_FROM_REPLAY=$(grep 'net_plugin.cpp:' "${NODEOS_DIR}"/log/nodeos.log | \
     grep recv_handshake | \
     cut -d']' -f3 | \
     cut -d',' -f4 | \

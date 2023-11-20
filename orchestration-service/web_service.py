@@ -226,6 +226,8 @@ def application(request):
                 return Response("Invalid JSON data", status=400)
 
             block = replay_config_manager.return_record_by_end_block_id(int(data['end_block_num']))
+            if block is None:
+                return Response(f"Config Record with {data['end_block_num']} Not found", status=404)
             block.expected_integrity_hash = data['integrity_hash']
             replay_config_manager.set(block)
             replay_config_manager.persist()

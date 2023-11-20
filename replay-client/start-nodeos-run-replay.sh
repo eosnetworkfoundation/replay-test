@@ -119,8 +119,7 @@ python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_P
 #################
 # 4) starts nodeos loads the snapshot, syncs to end block, and terminates
 #################
-## sync till start block ##
-echo "Start nodeos and sync till ${START_BLOCK}"
+echo "Start nodeos and sync till ${END_BLOCK}"
 
 ## update status when snapshot is complete: updates last block processed ##
 ## Background process grep logs on fixed interval secs ##
@@ -134,10 +133,10 @@ nodeos \
      --config "${CONFIG_DIR}"/sync-config.ini \
      --terminate-at-block ${END_BLOCK} \
      --integrity-hash-on-start \
-     --integrity-hash-on-stop \
-     &> "${NODEOS_DIR}"/log/nodeos-sync.log
-sleep 30
+     &> "${NODEOS_DIR}"/log/nodeos.log
+
 kill $BACKGROUND_STATUS_PID
+sleep 30
 
 #################
 # 5) get replay details from logs
@@ -145,18 +144,13 @@ kill $BACKGROUND_STATUS_PID
 echo "Reached End Block ${END_BLOCK}, getting nodeos state details "
 END_TIME=$(date '+%Y-%m-%dT%H:%M:%S')
 START_BLOCK_ACTUAL_INTEGRITY_HASH=$("${REPLAY_CLIENT_DIR:?}"/get_integrity_hash_from_log.sh "started" "$NODEOS_DIR")
-HEAD_BLOCK_NUM=$("${REPLAY_CLIENT_DIR:?}"/head_block_num_from_log.sh "${NODEOS_DIR}")
 
 #################
 # 6) restart nodeos read-only mode to get final integrity hash
 #################
 nodeos \
-     --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
      --data-dir "${NODEOS_DIR}"/data/ \
      --config "${CONFIG_DIR}"/readonly-config.ini \
-     --terminate-at-block ${END_BLOCK} \
-     --integrity-hash-on-start \
-     --integrity-hash-on-stop \
      &> "${NODEOS_DIR}"/log/nodeos-readonly.log &
 BACKGROUND_NODEOS_PID=$!
 sleep 30
@@ -166,7 +160,7 @@ END_BLOCK_ACTUAL_INTEGRITY_HASH=$(curl -s http://127.0.0.1:8888/v1/producer/get_
 ##
 # POST back to config with expected integrity hash
 python3 "${REPLAY_CLIENT_DIR:?}"/config_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
-   --end-block-num "$START_BLOCK" --integrity_hash "$START_BLOCK_ACTUAL_INTEGRITY_HASH"
+   --end-block-num "$START_BLOCK" --integrity-hash "$START_BLOCK_ACTUAL_INTEGRITY_HASH"
 
 # terminate read only nodeos in background
 kill $BACKGROUND_NODEOS_PID
@@ -177,7 +171,7 @@ kill $BACKGROUND_NODEOS_PID
 echo "Sending COMPLETE status"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
     --operation complete --job-id ${JOBID} \
-    --block-processed $HEAD_BLOCK_NUM \
+    --block-processed ${END_BLOCK} \
     --end-time "${END_TIME}" \
     --integrity-hash "${END_BLOCK_ACTUAL_INTEGRITY_HASH}"
 
