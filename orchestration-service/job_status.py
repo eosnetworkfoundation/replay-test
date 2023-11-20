@@ -12,6 +12,7 @@ class JobStatusEnum(Enum):
     WORKING = "working"
     ERROR = "error"
     TIMEOUT = "timeout"
+    HASH_MISMATCH = "hash_mismatch"
     COMPLETE = "complete"
 
     @staticmethod
@@ -32,6 +33,8 @@ class JobStatusEnum(Enum):
             job_status_enum = JobStatusEnum.ERROR
         if name == "TIMEOUT":
             job_status_enum = JobStatusEnum.TIMEOUT
+        if name == "HASH_MISMATCH":
+            job_status_enum = JobStatusEnum.HASH_MISMATCH
         if name == "COMPLETE":
             job_status_enum = JobStatusEnum.COMPLETE
 
@@ -63,7 +66,6 @@ class JobStatus:
         self.start_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
         self.end_time = None
         self.actual_integrity_hash = None
-        self.start_block_integrity_hash = None
 
     def __repr__(self):
         return (f"JobStatus(job_id={self.job_id}, "
@@ -76,7 +78,6 @@ class JobStatus:
                 f"status={self.status.name}, "
                 f"last_block_processed={self.last_block_processed}, "
                 f"start_time={self.start_time}, end_time={self.end_time}, "
-                f"start_block_integrity_hash={self.start_block_integrity_hash}, "
                 f"expected_integrity_hash={self.slice_config.expected_integrity_hash}, "
                 f"actual_integrity_hash={self.actual_integrity_hash})")
 
@@ -92,7 +93,6 @@ class JobStatus:
                 f"status={self.status.name}, "
                 f"last_block_processed={self.last_block_processed}, "
                 f"start_time={self.start_time}, end_time={self.end_time}, "
-                f"start_block_integrity_hash={self.start_block_integrity_hash}, "
                 f"expected_integrity_hash={self.slice_config.expected_integrity_hash}, "
                 f"actual_integrity_hash={self.actual_integrity_hash}")
 
@@ -110,7 +110,6 @@ class JobStatus:
         this_dict['last_block_processed'] = self.last_block_processed
         this_dict['start_time'] = self.start_time
         this_dict['end_time'] = self.end_time
-        this_dict['start_block_integrity_hash'] = self.start_block_integrity_hash
         this_dict['expected_integrity_hash'] = self.slice_config.expected_integrity_hash
         this_dict['actual_integrity_hash'] = self.actual_integrity_hash
         return this_dict
@@ -152,8 +151,8 @@ class JobManager:
 
         if 'status' in data:
             self.jobs[jobid].status = JobStatusEnum.lookup_by_name(data['status'])
-        if 'last_block_processed' in data:
-            self.jobs[jobid].last_block_processed = data['last_block_processed']
+        if 'last_block_processed' in data and data['last_block_processed'] is not None:
+            self.jobs[jobid].last_block_processed = int(data['last_block_processed'])
         if 'end_time' in data:
             self.jobs[jobid].end_time = data['end_time']
         if 'actual_integrity_hash' in data:

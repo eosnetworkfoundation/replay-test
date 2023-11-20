@@ -56,7 +56,7 @@ def test_get_nextjob(setup_module):
 
     assert response_plain.status_code == 200
     print(response_plain.content.decode('utf-8'))
-    plain_text_match = re.search(r"job_id=[0-9]+, replay_slice_id=1, snapshot_path=[a-z-A-Z0-9\\.\\/\\-\\:]+, storage_type=s3, leap_version=[rcdev0-9\\.\\-]+, start_block_num=[0-9]+, end_block_num=[0-9]+, status=WAITING_4_WORKER, last_block_processed=0, start_time=\d+-\d+-\d+T\d+:\d+:\d+, end_time=None, start_block_integrity_hash=None, expected_integrity_hash=[A-Za-z0-9]+, actual_integrity_hash=None",
+    plain_text_match = re.search(r"job_id=[0-9]+, replay_slice_id=1, snapshot_path=[a-z-A-Z0-9\\.\\/\\-\\:]+, storage_type=s3, leap_version=[rcdev0-9\\.\\-]+, start_block_num=[0-9]+, end_block_num=[0-9]+, status=WAITING_4_WORKER, last_block_processed=0, start_time=\d+-\d+-\d+T\d+:\d+:\d+, end_time=None, expected_integrity_hash=[A-Za-z0-9]+, actual_integrity_hash=None",
         response_plain.content.decode('utf-8'))
     assert plain_text_match
 
@@ -66,7 +66,7 @@ def test_get_nextjob(setup_module):
 
     assert response_json.status_code == 200
     # print (response_json.content.decode('utf-8'))
-    json_match = re.search(r"\{\"job_id\": [0-9]+, \"replay_slice_id\": 1, \"snapshot_path\": \"[a-z-A-Z0-9\\.\\/\\-\\:]+\", \"storage_type\": \"s3\", \"leap_version\": \"[rcdev0-9\\.\\-]+\", \"start_block_num\": [0-9]+, \"end_block_num\": [0-9]+, \"status\": \"WAITING_4_WORKER\", \"last_block_processed\": 0, \"start_time\": \"\d+-\d+-\d+T\d+:\d+:\d+\", \"end_time\": null, \"start_block_integrity_hash\": null, \"expected_integrity_hash\": \"[A-Za-z0-9]+\", \"actual_integrity_hash\": null\}",
+    json_match = re.search(r"\{\"job_id\": [0-9]+, \"replay_slice_id\": 1, \"snapshot_path\": \"[a-z-A-Z0-9\\.\\/\\-\\:]+\", \"storage_type\": \"s3\", \"leap_version\": \"[rcdev0-9\\.\\-]+\", \"start_block_num\": [0-9]+, \"end_block_num\": [0-9]+, \"status\": \"WAITING_4_WORKER\", \"last_block_processed\": 0, \"start_time\": \"\d+-\d+-\d+T\d+:\d+:\d+\", \"end_time\": null, \"expected_integrity_hash\": \"[A-Za-z0-9]+\", \"actual_integrity_hash\": null\}",
         response_json.content.decode('utf-8'))
     assert json_match
 
@@ -280,3 +280,33 @@ def test_post_config(setup_module):
 
     # all references should have the same value
     assert configAfter['expected_integrity_hash'] != configBefore['expected_integrity_hash']
+
+def test_index(setup_module):
+    """Test Home Page"""
+    cntx = setup_module
+    html_response = requests.get(cntx['base_url'] + '/',headers=cntx['html_headers'])
+
+    assert html_response.status_code == 200
+    html_content = html_response.content.decode('utf-8')
+    assert len(html_content) > 10
+
+def test_summary(setup_module):
+    """Test Summary Report Page"""
+    cntx = setup_module
+    html_response = requests.get(cntx['base_url'] + '/summary',headers=cntx['html_headers'])
+    text_response = requests.get(cntx['base_url'] + '/summary',headers=cntx['plain_text_headers'])
+    json_response = requests.get(cntx['base_url'] + '/summary',headers=cntx['json_headers'])
+
+    assert html_response.status_code == 200
+    assert text_response.status_code == 200
+    assert json_response.status_code == 200
+    html_content = html_response.content.decode('utf-8')
+    text_content = text_response.content.decode('utf-8')
+    json_content = json_response.content.decode('utf-8')
+    assert len(html_content) > 10
+    assert len(text_content) > 10
+    assert len(json_content) > 10
+
+    assert html_content != text_content
+    assert text_content != json_response
+    assert json_response != html_content

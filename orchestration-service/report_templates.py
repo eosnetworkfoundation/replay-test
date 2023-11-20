@@ -11,7 +11,6 @@ class ReportTemplate:
 <html>
 <body>
 <title>Chicken Dance Index Page</title>
-<h2>Chicken Dance Index Page</h2>
 <a href="/status">Status</a>: shows current jobs and status of each job</br>
 <a href="/config?sliceid=1">Config</a>: must specify a sliceid, detailed config supporting job</br>
 <a href="/summary">Result Summary</a>: progress or final summary</br>
@@ -55,7 +54,7 @@ li { padding: .5em }
 </head>
 
 <body>
-<h2>Chicken Dance Status Report</h2>
+<h2><a href='/'>Home</a></h2>\n<h2>Chicken Dance Status Report</h2>
 """
 
 
@@ -68,16 +67,15 @@ li { padding: .5em }
     def status_html(this_slice):
         """HTML Template For Status Report"""
         return f"""        <ul>
-        <li> Replay Slice Id: {this_slice.slice_config.replay_slice_id}</li>
+        <li> <a href=\"/config?sliceid={this_slice.slice_config.replay_slice_id}\">Replay Slice Id: {this_slice.slice_config.replay_slice_id}</a></li>
         <li> Job Status: {this_slice.status.name}</li>
         <li> Last Block Processed: {this_slice.last_block_processed}</li>
         <li> Start Time: {this_slice.start_time}</li>
         <li> End Time: {this_slice.end_time}</li>
         <li> Start Block: {this_slice.slice_config.start_block_id}</li>
         <li> End Block: {this_slice.slice_config.end_block_id}</li>
-        <li> Start Block Integrity Hash: {this_slice.start_block_integrity_hash}</li>
-        <li> End Block Integrity Hash: {this_slice.actual_integrity_hash}</li>
-        <li> Expected End Block Integ Hash: {this_slice.slice_config.expected_integrity_hash}<li>
+        <li> Actual End Block Integrity Hash: {this_slice.actual_integrity_hash}</li>
+        <li> Expected End Block Integ Hash: {this_slice.slice_config.expected_integrity_hash}</li>
     </ul>
 """
 
@@ -106,8 +104,7 @@ li { padding: .5em }
     End Time: {this_slice.end_time}
     Start Block: {this_slice.slice_config.start_block_id}
     End Block: {this_slice.slice_config.end_block_id}
-    Start Block Integrity Hash: {this_slice.start_block_integrity_hash}
-    End Block Integrity Hash: {this_slice.actual_integrity_hash}
+    Actual End Block Integrity Hash: {this_slice.actual_integrity_hash}
     Expected End Block Integ Hash: {this_slice.slice_config.expected_integrity_hash}\n"""
 
     @staticmethod
@@ -148,7 +145,7 @@ li { padding: .5em }
 </head>
 
 <body>
-<h2>Replay Config</h2>
+<h2><a href='/'>Home</a></h2>\n<h2>Replay Config</h2>
 """
     @staticmethod
     def config_html(this_slice):
@@ -175,11 +172,17 @@ li { padding: .5em }
         return "      SUMMARY REPORT              \n-------------------------------------\n"
 
     @staticmethod
-    def summary_text_report(data):
+    def summary_text_report(report):
         """Plain Text Summary Report"""
         content = ReportTemplate.summary_text_header()
-        content += f"{data.blocks_processed} block processed out of {data.total_blocks}<br/>"
-        content += f"{data.blocks_processed*100/data.total_blocks}% block processed<br/>"
+        content += f"{report['blocks_processed']} blocks processed out of {report['total_blocks']} "
+        content += f" {round(report['blocks_processed']*100/report['total_blocks'],0)}% block processed\n"
+        content += f"Completed Jobs Succeeded {report['jobs_succeeded']} Completed Jobs Failed {report['jobs_failed']}\n"
+        content += f"Jobs Remaining {report['total_jobs'] - report['jobs_succeeded'] - report['jobs_failed']}\n"
+        if len(report['failed_jobs']) > 0:
+            content += "-------------FAILED JOBS-------------\n"
+            for job in report['failed_jobs']:
+                content += f"Job Id {job['jobid']}\tConfig Id {job['configid']}\tCurrent Status {job['status']}\n"
         content += ReportTemplate.summary_text_footer()
         return content
 
@@ -208,11 +211,28 @@ border-bottom-right-radius: 5px;
 width: 32em;
 }
 li { padding: .5em }
+ul.joblist {
+list-style-type: none;
+padding-inline-start: 0;
+width: 34.5em;
+}
+ul.details {
+border: 0px solid;
+list-style-type: none;
+margin-left: 1em;
+padding: 0;
+}
+ul.details li {
+display: inline-block;
+margin-left: 0em;
+margin-right: 2em;
+padding: 0;
+}
 </style>
 </head>
 
 <body>
-<h2>Summary Report</h2>
+<h2><a href='/'>Home</a></h2>\n<h2>Summary Report</h2>
 """
 
     # 'total_blocks': total_blocks,
@@ -222,11 +242,29 @@ li { padding: .5em }
     # 'jobs_failed': jobs_failed,
     # 'failed_jobs': failed_jobs
     @staticmethod
-    def summary_html_report(data):
+    def summary_html_report(report):
         """HTML Summary Report"""
         content = ReportTemplate.summary_html_header()
-        content += f"{data.blocks_processed} block processed out of {data.total_blocks}<br/>"
-        content += f"{data.blocks_processed*100/data.total_blocks}% block processed<br/>"
+        content += "<ul>\n"
+        content += f"<li>{report['blocks_processed']} blocks processed out of {report['total_blocks']}</li>\n"
+        content += f"<li>{round(report['blocks_processed']*100/report['total_blocks'],0)}% block processed</li>\n"
+        content += f"<li>Completed Jobs Succeeded {report['jobs_succeeded']}</li>\n"
+        content += f"<li>Completed Jobs Failed {report['jobs_failed']}</li>\n"
+        content += f"<li>Jobs Remaining {report['total_jobs'] - report['jobs_succeeded'] - report['jobs_failed']}</li>\n"
+        content += "</ul>\n"
+        if len(report['failed_jobs']) > 0:
+            content += "<h3>Failed Jobs</h3>\n"
+            content += "<ul class='joblist'>\n"
+            for job in report['failed_jobs']:
+
+                content += f"""         <li>
+            <ul class='details'>
+            <li><a href=\"/status?sliceid={job['configid']}\">Job {job['jobid']}</a></li>
+            <li><a href=\"/config?sliceid={job['configid']}\">Config {job['configid']}</a></li>
+            <li>Current Status {job['status']}</li>
+            </ul>
+        </li>\n"""
+            content += "</ul>\n"
         content += ReportTemplate.summary_html_footer()
         return content
 

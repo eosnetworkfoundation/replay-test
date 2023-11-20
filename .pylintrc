@@ -6,3 +6,7 @@ disable=duplicate-code
 
 max-locals=19
 max-attributes=12
+
+[FORMAT]
+# ignore long format lines
+ignore-long-lines=^.*f"{1,3}.*$

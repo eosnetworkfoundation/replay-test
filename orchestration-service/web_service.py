@@ -8,10 +8,11 @@ from werkzeug.http import generate_etag
 from report_templates import ReportTemplate
 from replay_configuration import ReplayConfigManager
 from job_status import JobManager
+from job_status import JobStatusEnum
 
-def create_summary():
-    """Creates data object for summary report"""
-    data = {
+def create_summary(job_manager):
+    """Creates report object for summary report"""
+    report = {
         'total_blocks': 0,
         'blocks_processed': 0,
         'total_jobs': 0,
@@ -19,38 +20,42 @@ def create_summary():
         'jobs_failed': 0,
         'failed_jobs': []
     }
-    for this_job in jobs.get_all().items():
+    for this_job_obj in job_manager.get_all().items():
+        # jobid = this_job_obj[0]
+        job = this_job_obj[1]
         # caculate progress
-        if this_job.slice_config.end_block_id > this_job.slice_config.start_block_id \
-          and this_job.slice_config.start_block_id > 0:
-            data['total_blocks'] += this_job.slice_config.end_block_id \
-                - this_job.slice_config.start_block_id
-        if this_job.last_block_processed > 0:
-            data['blocks_processed'] += this_job.last_block_processed \
-                - this_job.slice_config.start_block_id
+        if job.slice_config.end_block_id > job.slice_config.start_block_id \
+          and job.slice_config.start_block_id > 0:
+            report['total_blocks'] += job.slice_config.end_block_id \
+                - job.slice_config.start_block_id
+        if job.last_block_processed > 0:
+            report['blocks_processed'] += job.last_block_processed \
+                - job.slice_config.start_block_id
 
         # calculate jobs
-        data['total_jobs'] += 1
-        if this_job.status.name == "COMPLETE":
-            if this_job.slice_config.expected_integrity_hash == this_job.actual_integrity_hash:
-                data['jobs_succeeded'] += 1
-            else:
-                data['jobs_failed'] += 1
-                data['failed_jobs'].append(
-                    {
-                    'status': 'COMPLETE',
-                    'jobid': this_job.job_id ,
-                    'configid': this_job.slice_config.replay_slice_id
-                    })
-        if this_job.status.name in ("ERROR", "TIMEOUT"):
-            data['jobs_failed'] += 1
-            data['failed_jobs'].append(
+        report['total_jobs'] += 1
+        if job.status.name == "COMPLETE" \
+            and job.slice_config.expected_integrity_hash == job.actual_integrity_hash:
+            report['jobs_succeeded'] += 1
+        if job.status.name in ("ERROR", "TIMEOUT", "HASH_MISMATCH"):
+            report['jobs_failed'] += 1
+            report['failed_jobs'].append(
             {
-                'status': 'COMPLETE',
-                'jobid': this_job.job_id ,
-                'configid': this_job.slice_config.replay_slice_id
+                'status': job.status.name,
+                'jobid': job.job_id ,
+                'configid': job.slice_config.replay_slice_id
             })
-        return data
+        if job.status.name == "COMPLETE" \
+            and job.slice_config.expected_integrity_hash != job.actual_integrity_hash:
+            job.status = JobStatusEnum.HASH_MISMATCH
+            report['jobs_failed'] += 1
+            report['failed_jobs'].append(
+            {
+            'status': job.status.name,
+            'jobid': job.job_id ,
+            'configid': job.slice_config.replay_slice_id
+            })
+    return report
 
 @Request.application
 # pylint: disable=too-many-return-statements disable=too-many-branches
@@ -240,7 +245,7 @@ def application(request):
         return Response(content, content_type='text/html')
 
     elif request.path == '/summary':
-        report_obj = create_summary()
+        report_obj = create_summary(jobs)
         # Format based on content type
         # content type is None when no content-type passed in
         # HTML
