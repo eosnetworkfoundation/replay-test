@@ -49,10 +49,10 @@ Once your replay host is setup you need to ssh into the host and start the job.
 
 **Alternative**: you can start a replay node on the command line from the orchestrator node. See [an example](scripts/run-replay-instance.sh).
 
-## Viewing Status
-You can see the status of jobs by using the webservice on the orchestrator node. Navigate to `http://orchestor.example.com:4000/status`.
+## Web Dashboard
+You can see the status of jobs, configuration, and summary of replay status by using the webservice on the orchestrator node. Navigate to `http://orchestor.example.com:4000/`.
 
-Look at [HTTP Service Calls](docs/http-service-calls.md) for other URL options and viewing options.
+Many HTTP calls support HTML, JSON, and Text responses. Look at [HTTP Service Calls](docs/http-service-calls.md) for other URL options and Accept encoding options. 
 
 ## Termination of Replay Nodes
 Replay nodes are not automatically terminated. To save on hosting costs, it is advisable to terminate the nodes after the replay tests are completed.
