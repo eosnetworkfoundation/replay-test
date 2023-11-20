@@ -28,9 +28,10 @@ This runs the following test files.
 - `test_replay_configuration.py` - tests the replay config class
 - `test_jobs_class.py` - tests the jobs class
 - `test_web_service` - starts the web service and runs integration test
+- `test_summary_report` - unit tests to make sure the summary report can be generated
 
 ## Replay Tests
-Runs additional integration tests, testing the client side code. The replay service is mostly shell scripts. `job_operations.py` was created to perform more sophisticated HTTP operations. The tests here test `job_operations.py`.
+Runs additional integration tests, testing the client side code. The replay service is mostly shell scripts. `job_operations.py` was created to perform more sophisticated job related HTTP operations. `config_operations.py` is very similar, its sole purpose it to take the integrity hash, from a snapshot, and update the configuration on the orchestration service. See [config POST](https://github.com/eosnetworkfoundation/replay-test/blob/main/docs/http-service-calls.md#post-2) for details on the configuration operations.
 
 ### How to Run
 The web service test will start up a web service on loopback, 127.0.0.1 port 4000.

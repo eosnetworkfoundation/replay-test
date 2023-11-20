@@ -67,7 +67,6 @@ fi
 #################
 # 2) http GET job details from orchestration service, incls. block range
 #################
-## need job details to get leap version and copy snapshot
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation pop > /tmp/job.conf.json
 
 STATUS=$(cat /tmp/job.conf.json | python3 "${REPLAY_CLIENT_DIR:?}"/parse_json.py "status_code")
@@ -156,8 +155,13 @@ BACKGROUND_NODEOS_PID=$!
 sleep 30
 
 END_BLOCK_ACTUAL_INTEGRITY_HASH=$(curl -s http://127.0.0.1:8888/v1/producer/get_integrity_hash | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "integrity_hash")
+# write hash to file, file not needed, backup for safety
+echo "$END_BLOCK_ACTUAL_INTEGRITY_HASH" > "$NODEOS_DIR"/log/end_integrity_hash.txt
 
 ##
+# we don't always know the integrity hash from the snapshot
+# for example moving to a new version of leap, or upgrade to state db
+# this updates the config and write out to a meta-data file on the server side
 # POST back to config with expected integrity hash
 python3 "${REPLAY_CLIENT_DIR:?}"/config_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
    --end-block-num "$START_BLOCK" --integrity-hash "$START_BLOCK_ACTUAL_INTEGRITY_HASH"

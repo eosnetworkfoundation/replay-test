@@ -33,7 +33,7 @@ Rel(replayD, orchestrator, "gets jobs/sets status", "HTTP")
 ```
 
 ## Sequence
-Fairly straight forward, the relay host picks up a job, and updates the jobs status while it works through the lifecycle. The relay host will update the progress by updating the last block processed. Full list of status is found here. https://github.com/eosnetworkfoundation/replay-test/blob/main/orchestration-service/job_status.py#L8-L15
+The relay host picks up a job, and updates the jobs status while it works through the lifecycle. A full list and description of the [HTTP API is documented separately](./http-service-calls.md). The relay host will update the progress by updating the last block processed. Full list of status is found here. https://github.com/eosnetworkfoundation/replay-test/blob/main/orchestration-service/job_status.py#L8-L15
 
 ```mermaid
 
@@ -45,6 +45,8 @@ sequenceDiagram
     Relay->>Orch: POST /job status=STARTED
     Orch->>Relay: 200 SUCCESS
     Relay->>Orch: POST /job status=SNAPSHOT_LOADING
+    Orch->>Relay: 200 SUCCESS
+    Relay->>Orch: POST /config expected_integrity_hash=SHA_256
     Orch->>Relay: 200 SUCCESS
     Relay->>Orch: POST /job status=WORKING
     Orch->>Relay: 200 SUCCESS
@@ -72,6 +74,6 @@ Dependency on aws client, python3, curl, and large volume under /data
 
 ## Final Report
 Final report show either All OK, or shows
-- Final status report available via HTTP showing all good
-- Final status shows block ranges with mismatched integrity hashes
-In addition the final report show percentage complete in terms of blocks processes against total blocks that need to be processed. The final report is cached and generated every 4 minutes.
+- number of blocks processed and percentage of total blocks processed
+- number of successfully completed, failed jobs, and remaining jobs
+- list of failed jobs with `Job Id` and `Configuration Slice`

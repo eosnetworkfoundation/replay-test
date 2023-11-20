@@ -3,7 +3,7 @@
 ## Summary
 - job - gets/sets configuration data for the replay nodes
 - status - gets a replay nodes progress and state
-- config - get the configuration data used to initialize the job
+- config - get/sets the configuration data used to initialize the job
 - healthcheck - gets 200/0K always
 
 ## Job
@@ -37,6 +37,7 @@ For the GET request when there are no parameters return statuses for all jobs. R
 
 ## Config
 `/config` GET requests take one parameter `sliceid`. The `sliceid` must be specified
+`/config` POST requests has no parameters, and has two items in the body `end_block_num` and `integrity_hash`
 *Note:* status will return `replay_slice_id`, this value can be used as the `sliceid` parameter for `/status` and `/config`
 
 ### GET
@@ -45,9 +46,12 @@ For the GET returns the configuration details for the given replay slice.
 - If Accepts header is application/json returns json
 For the GET request when there are no parameters return statuses for all jobs. Returning all status respected same accepts encoding an per slice configuration.
 
+### POST
+When running replay tests we don't always known the expected integrity hash. For example when state database is updated, which may come as part of an update the leap version. For that reason we take the integrity hash, after loading a snapshot, as the known good integrity hash at that block height. The `/config` POST request used the `end_block_num` in the body to look up the configuration slice. Following that the POST updates the configuration in memory and flushes back to disk. This persists the integrity hash as the known good, and expected value at `end_block_num`.
+
 ## Healthcheck
 Always returns same value used for healthchecks
 
 ### GET
 Only get request is supported. Always returns body of `OK` with status `200`
-- Only returns `text/plain utf-8` encoded content. 
+- Only returns `text/plain utf-8` encoded content.

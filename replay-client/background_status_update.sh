@@ -10,6 +10,10 @@ STATUS="LOADING_SNAPSHOT"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 loop_count=0
+# clean up old integrity hash if it exists
+if [ -f "$NODEOS_DIR"/log/start_integrity_hash.txt ]; then
+  rm "$NODEOS_DIR"/log/start_integrity_hash.txt
+fi
 
 while [ $loop_count -lt 200 ]
 do
@@ -25,6 +29,8 @@ do
       STATUS="WORKING"
       python3 "${SCRIPT_DIR}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
          --operation update-status --status "${STATUS}" --job-id ${JOBID}
+      # write hash to file
+      echo $HASH > "$NODEOS_DIR"/log/start_integrity_hash.txt
     fi
   else
     BLOCK_NUM=$("${SCRIPT_DIR}"/head_block_num_from_log.sh "$NODEOS_DIR")
