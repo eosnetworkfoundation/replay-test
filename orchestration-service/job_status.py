@@ -2,6 +2,7 @@
 import json
 from datetime import datetime
 from enum import Enum
+import re
 
 # pylint: disable=too-few-public-methods
 class JobStatusEnum(Enum):
@@ -137,6 +138,20 @@ class JobManager:
         """Return all jobs"""
         return self.jobs
 
+    def is_integer(self, string):
+        if string is None:
+            return False
+
+        if isinstance(string, int):
+            return True
+
+        print (f"STRING {string}\n")
+        # Define a regex pattern for a positive integer
+        pattern = r'^\d+$'
+        match = re.match(pattern, string)
+
+        return match is not None
+
     def set_job(self, data):
         """update job records, from dictionary, return bool success"""
 
@@ -151,9 +166,7 @@ class JobManager:
 
         if 'status' in data:
             self.jobs[jobid].status = JobStatusEnum.lookup_by_name(data['status'])
-        if 'last_block_processed' in data \
-            and data['last_block_processed'] is not None \
-            and isinstance(data['last_block_processed'], int):
+        if 'last_block_processed' in data and self.is_integer(data['last_block_processed']):
             self.jobs[jobid].last_block_processed = int(data['last_block_processed'])
         if 'end_time' in data:
             self.jobs[jobid].end_time = data['end_time']
