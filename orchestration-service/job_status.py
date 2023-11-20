@@ -139,6 +139,7 @@ class JobManager:
         return self.jobs
 
     def is_integer(self, string):
+        """custom check if is int"""
         if string is None:
             return False
 
