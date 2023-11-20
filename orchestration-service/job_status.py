@@ -153,7 +153,7 @@ class JobManager:
             self.jobs[jobid].status = JobStatusEnum.lookup_by_name(data['status'])
         if 'last_block_processed' in data \
             and data['last_block_processed'] is not None \
-            and isinstance(data['last_block_processed']) is int:
+            and isinstance(data['last_block_processed'], int):
             self.jobs[jobid].last_block_processed = int(data['last_block_processed'])
         if 'end_time' in data:
             self.jobs[jobid].end_time = data['end_time']
