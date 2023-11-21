@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-USER="enf-replay"
+USER=${1:-"enf-replay"}
 
 # aggressivley terminate nodeos
 # start nicely then get mean

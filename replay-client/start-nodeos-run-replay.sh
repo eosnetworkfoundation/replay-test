@@ -29,7 +29,10 @@ NODEOS_DIR=/data/nodeos
 
 function trap_exit() {
   if [ -n "${BACKGROUND_STATUS_PID}" ]; then
-    kill ${BACKGROUND_STATUS_PID}
+    kill "${BACKGROUND_STATUS_PID}"
+  fi
+  if [ -n "${BACKGROUND_NODEOS_PID}" ]; then
+    kill "${BACKGROUND_NODEOS_PID}"
   fi
   if [ -n "${JOBID}" ]; then
     python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
@@ -54,6 +57,10 @@ if [ "$TUID" -eq 0 ]; then
   echo "Trying to run as root user exiting"
   exit
 fi
+
+## cleanup previous runs ##
+"${REPLAY_CLIENT_DIR:?}"/replay-node-cleanup.sh "$USER"
+
 ## data volume must be large enough ##
 volsize=$(df -h /data | awk 'NR==2 {print $4}' | sed 's/G//' | cut -d. -f1)
 if [ ${volsize:-0} -lt 40 ]; then
