@@ -61,8 +61,8 @@ sequenceDiagram
 1. performs file setup: create dirs, get snapshot to load
 2. GET job details from orchestration service, incls. block range
 3. local non-priv install of nodeos
-4. starts nodeos loads the snapshot and terminates
-5. replay transactions from local blocks.log or networked peers
+4. starts nodeos loads the snapshot
+5. replay transactions to specified block height from blocks.log or networked peers and terminates
 6. restart nodeos read-only mode to get final integrity hash
 7. POST completed status for configured block range
 8. retain blocks logs copy over to cloud storage
@@ -73,7 +73,7 @@ Communicates to orchestration service via HTTP
 Dependency on aws client, python3, curl, and large volume under /data
 
 ## Final Report
-Final report show either All OK, or shows
+Final report shows
 - number of blocks processed and percentage of total blocks processed
 - number of successfully completed, failed jobs, and remaining jobs
-- list of failed jobs with `Job Id` and `Configuration Slice`
+- list of failed jobs with `Job Id`, `Configuration Slice`, and status

@@ -32,28 +32,28 @@ def create_summary(job_manager):
             report['blocks_processed'] += job.last_block_processed \
                 - job.slice_config.start_block_id
 
-        # calculate jobs
+        # try to fix errors, where expected integrity hash was populated after job finish
+        # this race condition leaves job incorrectly marked as HASH_MISMATCH, and we can fix
+        if job.status == JobStatusEnum.HASH_MISMATCH:
+            if job.slice_config.expected_integrity_hash == job.actual_integrity_hash:
+                job.status = JobStatusEnum.COMPLETE
+        # look for COMPLETE jobs witch hash mistmatch, mark status
+        if job.status == JobStatusEnum.COMPLETE \
+            and job.slice_config.expected_integrity_hash != job.actual_integrity_hash:
+            job.status = JobStatusEnum.HASH_MISMATCH
+        # process succceed jobs
         report['total_jobs'] += 1
-        if job.status.name == "COMPLETE" \
+        if job.status == JobStatusEnum.COMPLETE \
             and job.slice_config.expected_integrity_hash == job.actual_integrity_hash:
             report['jobs_succeeded'] += 1
-        if job.status.name in ("ERROR", "TIMEOUT", "HASH_MISMATCH"):
+        # process failed jobs
+        if job.status in (JobStatusEnum.ERROR, JobStatusEnum.TIMEOUT, JobStatusEnum.HASH_MISMATCH):
             report['jobs_failed'] += 1
             report['failed_jobs'].append(
             {
                 'status': job.status.name,
                 'jobid': job.job_id ,
                 'configid': job.slice_config.replay_slice_id
-            })
-        if job.status.name == "COMPLETE" \
-            and job.slice_config.expected_integrity_hash != job.actual_integrity_hash:
-            job.status = JobStatusEnum.HASH_MISMATCH
-            report['jobs_failed'] += 1
-            report['failed_jobs'].append(
-            {
-            'status': job.status.name,
-            'jobid': job.job_id ,
-            'configid': job.slice_config.replay_slice_id
             })
     return report
 

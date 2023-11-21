@@ -3,6 +3,7 @@
 export PYTHONPATH=..:meta-data:orchestration-service:orchestration-service/test:$PYTHONPATH
 # setup test file for persistance testing
 cp ../../meta-data/test-simple-jobs.json ../../meta-data/test-modify-jobs.json
+pytest test_summary_report.py
 pytest test_replay_configuration.py
 pytest test_jobs_class.py
 # dump and remove file used for persistance testing

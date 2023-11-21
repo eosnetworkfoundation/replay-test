@@ -5,8 +5,8 @@
 # 1) performs file setup: create dirs, get snapshot to load
 # 2) http GET job details from orchestration service, incls. block range
 # 3) local non-priv install of nodeos
-# 4) starts nodeos loads the snapshot and terminates at specified end block
-# 5) replay transactions from local blocks.log or networked peers
+# 4) starts nodeos loads the snapshot
+# 5) replay transactions to specified block height from blocks.log or networked peers and terminates
 # 6) restart nodeos read-only mode to get final integrity hash
 # 7) http POST completed status for configured block range
 # 8) retain blocks logs copy over to cloud storage
