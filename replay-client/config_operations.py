@@ -111,4 +111,18 @@ if __name__ == '__main__':
         args.end_block_num,
         args.integrity_hash)
 
-    print (json.dumps(job_message))
+    # nicer print messages
+    if job_message['status_code'] == 200:
+        print (f"Config Operation {args.operation} Succeeded")
+    if job_message['status_code'] > 200 and job_message['status_code'] < 300:
+        print (f"Config {args.operation} Succeed. Unexpected status, {job_message['status_code']}")
+    if job_message['status_code'] >= 300 and job_message['status_code'] < 400:
+        print (f"Config {args.operation} Failed. Unexpected redirection, {job_message['status_code']}, not handled")
+    if job_message['status_code'] >= 400:
+        if job_message['status_code'] == 404:
+            print (
+            f"""Config {args.operation} Failed with {job_message['status_code']}, configuration not found.
+            Did you try to reference a config that does not exist?"""
+            )
+        else:
+            print (f"Config {args.operation} Failed with {job_message['status_code']}")
