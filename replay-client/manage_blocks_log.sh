@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# Pulls block log file from cloud storage or saves block log to cloud storage
 # Params
 #
 # NODEOS_DIR - local host top level directory
@@ -43,14 +44,15 @@ aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_PATH"/"$S3_FILE" > /dev/n
 if [ "$OPERATION" == "retain" ]; then
   if [ $NOT_EXIST ]; then
     aws s3 cp "$NODEOS_DIR"/data/blocks/blocks.log "${S3_DIR}"/"$S3_FILE"
+    # TODO: add uncompress step issue #31
   else
     echo "blocks.log file already exists, skipping backup to cloud storage"
   fi
 elif [ "$OPERATION" == "restore" ]; then
   if [ $NOT_EXIST ]; then
-    # could be enhanced to copy any blocks.log with blocks in range.
     echo "${S3_DIR}/${S3_FILE} does not exist skipping blocks log restore step"
   else
+    # TODO: add compression step issue #31
     aws s3 cp "${S3_DIR}"/"$S3_FILE" "$NODEOS_DIR"/data/blocks/blocks.log
   fi
 else

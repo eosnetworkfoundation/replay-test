@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# cleans up data files and kills nodes enable replay to run again
+
 USER=${1:-"enf-replay"}
 
 # aggressivley terminate nodeos

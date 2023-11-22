@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# install nodeos locally 
+
 LEAP_VERSION="${1}"
 OS="ubuntu22.04"
 v4_DEB_FILE="leap_""${LEAP_VERSION}"-"${OS}""_amd64.deb"

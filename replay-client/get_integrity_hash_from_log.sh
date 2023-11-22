@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# grep pattern to find integrity hash 
+
 # either "started" or "stopped"
 TYPE=${1:-started}
 NODEOS_DIR=${2:-/data/nodeos}

@@ -45,3 +45,21 @@ chmod 777 /data
 
 ## git scripts for enf-user ##
 sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-test
+
+## add private ip ##
+# MACRO_P echo $ORCH_IP > /home/"${USER}"/orchestration-ip.txt
+
+## create cron tab ##
+# random number of mins to space out startups across many replay nodes
+random_num=$(( (RANDOM % 10) + 1 ))
+mins=""
+for m in 0 1 2 3 4 5; do
+  mins="$mins""$m$random_num"
+  if [ $m -lt 5 ]; then
+    mins="$mins"","
+  fi
+done
+# mins is something like 04,14,24,34,44,54
+# run 6 times every hour
+# cron job manages lock file will exit if existing process is running
+echo "${mins} * * * * /home/${USER}/replay-test/replay-client/replay_wrapper_script.sh" | crontab -u ${USER} - && echo "Cron job added successfully"

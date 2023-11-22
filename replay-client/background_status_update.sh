@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # runs in the background and updates the status of the snapshot loading and sync run
+# POSTS back to orchestration service updating status and last block processed
 
 ORCH_IP=$1
 ORCH_PORT=${2}

@@ -1,9 +1,10 @@
-"""Module fetches a job and reserves the status."""
+"""Update Configuration by sending POST HTTP Request."""
 import json
 import argparse
 import sys
 import time
 import requests
+
 
 def update_by_end_block(base_url, max_tries, end_block_num, integrity_hash):
     """Update Config Object, only updates by end_block_id"""

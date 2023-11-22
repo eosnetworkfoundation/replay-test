@@ -1,24 +1,21 @@
 #!/usr/bin/env bash
 
+# launch replay nodes
 
-####
-## OUT OF DATE FOR EXAMPLE ONLY
-####
-aws ec2 run-instances --image-id ami-053b0d53c279acc90 \
---instance-type t2.micro \
---security-group-ids sg-04f895bd6442b69b5 \
---key-name aws-chicken-start \
---subnet-id subnet-0b9517f11e9684b3b \
---iam-instance-profile Arn=arn:aws:iam::087045697350:instance-profile/ReplayOrchestration \
---user-data file:///home/ubuntu/replay-test/scripts/orchestrator-bootstrap.sh \
---dry-run
+NUM_INSTANCES=${1:-1}
+DRY_RUN=${2}
 
-aws ec2 run-instances --image-id ami-053b0d53c279acc90 \
---instance-type t2.micro \
---security-group-ids sg-04f895bd6442b69b5 \
---key-name aws-chicken-start \
---iam-instance-profile Name=ReplayOrchestration \
---subnet-id subnet-0b9517f11e9684b3b \
+if [ -n "$DRY_RUN" ]; then
+  DRY_RUN="--dry-run"
+else
+  DRY_RUN=""
+fi
+
+# modify user data script to stuff in private ip of orchestration server
+ORCH_IP=$(sh /home/ubuntu/replay-test/scripts/get_private_ip.sh)
+sed "s^# MACRO_P echo \$ORCH_IP^echo $ORCH_IP^" /home/ubuntu/replay-test/scripts/replay-node-bootstrap.sh > /tmp/replay-node-bootstrap.sh
+mv /tmp/replay-node-bootstrap.sh /home/ubuntu/replay-test/scripts/replay-node-bootstrap.sh
+
+aws ec2 run-instances --launch-template LaunchTemplateName=ChickenReplayHost,Version=9 \
 --user-data file:///home/ubuntu/replay-test/scripts/replay-node-bootstrap.sh \
---count 1 \
---dry-run
+--count $NUM_INSTANCES $DRY_RUN

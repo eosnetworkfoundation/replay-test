@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# grep patters to find head block number currently processed
+# accounts for replay node sync and block log sync 
+
 NODEOS_DIR=${1:-/data/nodeos}
 
 # blocks log

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Create directory structure for replay 
+
 CONFIG_DIR="${1}"
 TUID=$(id -ur)
 

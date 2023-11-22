@@ -18,7 +18,8 @@
 # Final status shows block ranges with mismatched integrity hashes
 #
 # Author: Eric Passmore
-# Date: Nov 6th 2023
+# Org: ENF EOS Network Foundation
+# Date: Nov 21th 2023
 
 ORCH_IP="${1:-127.0.0.1}"
 ORCH_PORT="${2:-4000}"
@@ -26,6 +27,15 @@ ORCH_PORT="${2:-4000}"
 REPLAY_CLIENT_DIR=/home/enf-replay/replay-test/replay-client
 CONFIG_DIR=/home/enf-replay/replay-test/config
 NODEOS_DIR=/data/nodeos
+LOCK_FILE=/tmp/replay.lock
+
+if [ -f "$LOCK_FILE" ]; then
+  LOCKED_BY_PID=$(cat "$LOCK_FILE")
+  echo "Exiting found lock file from pid ${LOCKED_BY_PID}"
+  exit 1
+else
+  echo $$ > "$LOCK_FILE"
+fi
 
 function trap_exit() {
   if [ -n "${BACKGROUND_STATUS_PID}" ]; then
@@ -33,6 +43,9 @@ function trap_exit() {
   fi
   if [ -n "${BACKGROUND_NODEOS_PID}" ]; then
     kill "${BACKGROUND_NODEOS_PID}"
+  fi
+  if [ -f "$LOCK_FILE" ]; then
+    rm "$LOCK_FILE"
   fi
   if [ -n "${JOBID}" ]; then
     python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
@@ -48,6 +61,7 @@ trap trap_exit TERM
 ##################
 # 1) performs file setup: create dirs, get snapshot to load
 #################
+echo "Step 1 of 8 performs setup: cleanup previous replay, create dirs, get snapshot to load"
 ## who we are ##
 USER=enf-replay
 TUID=$(id -ur)
@@ -74,6 +88,7 @@ fi
 #################
 # 2) http GET job details from orchestration service, incls. block range
 #################
+echo "Step 2 of 8: Getting job details from orchestration service"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation pop > /tmp/job.conf.json
 
 STATUS=$(cat /tmp/job.conf.json | python3 "${REPLAY_CLIENT_DIR:?}"/parse_json.py "status_code")
@@ -96,6 +111,7 @@ LEAP_VERSION=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.
 #################
 # 3) local non-priv install of nodeos
 #################
+echo "Step 3 of 8: local non-priv install of nodeos"
 "${REPLAY_CLIENT_DIR:?}"/install-nodeos.sh $LEAP_VERSION
 PATH=${PATH}:${HOME}/nodeos/usr/bin
 export PATH
@@ -125,7 +141,7 @@ python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_P
 #################
 # 4) starts nodeos loads the snapshot, syncs to end block, and terminates
 #################
-echo "Start nodeos and sync till ${END_BLOCK}"
+echo "Step 4 of 8: Start nodeos, load snapshot, and sync till ${END_BLOCK}"
 
 ## update status when snapshot is complete: updates last block processed ##
 ## Background process grep logs on fixed interval secs ##
@@ -147,13 +163,14 @@ sleep 30
 #################
 # 5) get replay details from logs
 #################
-echo "Reached End Block ${END_BLOCK}, getting nodeos state details "
+echo "Step 5 of 8: Reached End Block ${END_BLOCK}, getting replay details from logs"
 END_TIME=$(date '+%Y-%m-%dT%H:%M:%S')
 START_BLOCK_ACTUAL_INTEGRITY_HASH=$("${REPLAY_CLIENT_DIR:?}"/get_integrity_hash_from_log.sh "started" "$NODEOS_DIR")
 
 #################
 # 6) restart nodeos read-only mode to get final integrity hash
 #################
+echo "Step 6 of 8: restart nodeos read-only mode to get final integrity hash"
 nodeos \
      --data-dir "${NODEOS_DIR}"/data/ \
      --config "${CONFIG_DIR}"/readonly-config.ini \
@@ -170,6 +187,7 @@ echo "$END_BLOCK_ACTUAL_INTEGRITY_HASH" > "$NODEOS_DIR"/log/end_integrity_hash.t
 # for example moving to a new version of leap, or upgrade to state db
 # this updates the config and write out to a meta-data file on the server side
 # POST back to config with expected integrity hash
+echo "Updating Configuration with expected integrity hash"
 python3 "${REPLAY_CLIENT_DIR:?}"/config_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
    --end-block-num "$START_BLOCK" --integrity-hash "$START_BLOCK_ACTUAL_INTEGRITY_HASH"
 
@@ -179,7 +197,7 @@ kill $BACKGROUND_NODEOS_PID
 #################
 # 7) http POST completed status for configured block range
 #################
-echo "Sending COMPLETE status"
+echo "Step 7 of 8: Sending COMPLETE status"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
     --operation complete --job-id ${JOBID} \
     --block-processed ${END_BLOCK} \
@@ -190,4 +208,9 @@ python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${OR
 # 8) retain block log copy over to cloud storage
 # retain - copies from local host to cloud storage
 #################
+echo "Step 8 of 8: copying blocks.log to cloud storage"
 "${REPLAY_CLIENT_DIR:?}"/manage_blocks_log.sh "$NODEOS_DIR" "retain" $START_BLOCK $END_BLOCK "${SNAPSHOT_PATH}"
+
+if [ -f "$LOCK_FILE" ]; then
+  rm "$LOCK_FILE"
+fi
