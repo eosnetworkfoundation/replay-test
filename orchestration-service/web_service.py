@@ -41,6 +41,11 @@ def create_summary(job_manager):
         if job.status == JobStatusEnum.COMPLETE \
             and job.slice_config.expected_integrity_hash != job.actual_integrity_hash:
             job.status = JobStatusEnum.HASH_MISMATCH
+        # look for ERROR state both hashes are None/Empty
+        if job.status == JobStatusEnum.COMPLETE \
+            and not job.slice_config.expected_integrity_hash \
+            and not job.actual_integrity_hash:
+            job.status = JobStatusEnum.ERROR
         # process succceed jobs
         report['total_jobs'] += 1
         if job.status == JobStatusEnum.COMPLETE \
