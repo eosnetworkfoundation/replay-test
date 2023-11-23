@@ -54,6 +54,18 @@ elif [ "$OPERATION" == "restore" ]; then
   else
     # TODO: add compression step issue #31
     aws s3 cp "${S3_DIR}"/"$S3_FILE" "$NODEOS_DIR"/data/blocks/blocks.log
+    leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ smoke-test || FAILED_SMOKE_TEST=true
+    # try an obvious repair
+    if [ $FAILED_SMOKE_TEST ]; then
+      leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ make-index
+      unset FAILED_SMOKE_TEST
+    fi
+    # retest
+    leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ smoke-test || FAILED_SMOKE_TEST=true
+    if [ $FAILED_SMOKE_TEST ]; then
+      echo "Smoke test for Blocks log ${NODEOS_DIR}/data/blocks/ failed exiting"
+      exit 127
+    fi
   fi
 else
   echo "unknow operation ${OPERATION} provided to manage_block_log.sh"

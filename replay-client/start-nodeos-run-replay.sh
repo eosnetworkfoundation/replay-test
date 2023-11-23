@@ -44,9 +44,7 @@ function trap_exit() {
   if [ -n "${BACKGROUND_NODEOS_PID}" ]; then
     kill "${BACKGROUND_NODEOS_PID}"
   fi
-  if [ -f "$LOCK_FILE" ]; then
-    rm "$LOCK_FILE"
-  fi
+  [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
   if [ -n "${JOBID}" ]; then
     python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
   fi
@@ -94,6 +92,7 @@ python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${OR
 STATUS=$(cat /tmp/job.conf.json | python3 "${REPLAY_CLIENT_DIR:?}"/parse_json.py "status_code")
 if [ $STATUS -ne 200 ]; then
   echo "Failed to aquire job"
+  [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
   exit 127
 fi
 echo "Received job details processing..."
@@ -124,6 +123,7 @@ else
   python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
         --operation update-status --status "ERROR" --job-id ${JOBID}
   echo "Unknown snapshot type ${STORAGE_TYPE}"
+  [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
   exit 127
 fi
 # restore blocks.log from cloud storage
@@ -211,6 +211,4 @@ python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${OR
 echo "Step 8 of 8: copying blocks.log to cloud storage"
 "${REPLAY_CLIENT_DIR:?}"/manage_blocks_log.sh "$NODEOS_DIR" "retain" $START_BLOCK $END_BLOCK "${SNAPSHOT_PATH}"
 
-if [ -f "$LOCK_FILE" ]; then
-  rm "$LOCK_FILE"
-fi
+[ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
