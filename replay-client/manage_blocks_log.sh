@@ -57,7 +57,8 @@ elif [ "$OPERATION" == "restore" ]; then
     leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ smoke-test > /dev/null 2>&1 || FAILED_SMOKE_TEST=true
     # try an obvious repair
     if [ $FAILED_SMOKE_TEST ]; then
-      leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ make-index >> "$NODEOS_DIR"/log/leap-util.log
+      echo "leap-util generating block.index"
+      leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ make-index >> "$NODEOS_DIR"/log/leap-util.log 2>&1
       unset FAILED_SMOKE_TEST
     fi
     # retest
