@@ -51,7 +51,7 @@ sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-te
 
 ## create cron tab ##
 # random number of mins to space out startups across many replay nodes
-random_num=$(( (RANDOM % 10) + 1 ))
+random_num=$(( RANDOM % 10 ))
 mins=""
 for m in 0 1 2 3 4 5; do
   mins="$mins""$m$random_num"
