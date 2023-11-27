@@ -36,7 +36,10 @@ S3_BUCKET=$(echo "${S3_DIR}" | sed 's#s3://##' | cut -d'/' -f1)
 # figure out s3 path
 S3_PATH=$(echo "${S3_DIR}" | sed 's#s3://##' | cut -d'/' -f2-)
 # figure out file name
-S3_FILE=blocks-${START_BLOCK_NUM}-${END_BLOCK_NUM}.log
+if [ ${START_BLOCK_NUM} -lt 1 ]; then
+  START_BLOCK_NUM=1
+  S3_FILE=blocks-${START_BLOCK_NUM}-${END_BLOCK_NUM}.log
+fi
 
 # does S3 file exist
 aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_PATH"/"$S3_FILE" > /dev/null 2>&1 || NOT_EXIST=true

@@ -106,6 +106,8 @@ SNAPSHOT_PATH=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json
 STORAGE_TYPE=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "storage_type")
 EXPECTED_INTEGRITY_HASH=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "expected_integrity_hash")
 LEAP_VERSION=$(cat /tmp/job.conf.json | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "leap_version")
+# get network/source needed to find S3 Files (eg "mainnet" vs "jungle")
+SOURCE_TYPE=$(dirname "$SNAPSHOT_PATH"  | sed 's#s3://##' | cut -d'/' -f2)
 
 #################
 # 3) local non-priv install of nodeos
@@ -117,8 +119,12 @@ export PATH
 
 ## copy snapshot ##
 if [ $STORAGE_TYPE = "s3" ]; then
-  echo "Copying snapshot to localhost"
-  aws s3 cp "${SNAPSHOT_PATH}" "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
+  if [ $START_BLOCK -gt 0 ] && [ -n "${SNAPSHOT_PATH}" ]; then
+    echo "Copying snapshot to localhost"
+    aws s3 cp "${SNAPSHOT_PATH}" "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
+  else
+    echo "Warning: No snapshot provided in config or start block is zero (0)"
+  fi
 else
   python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
         --operation update-status --status "ERROR" --job-id ${JOBID}
@@ -126,12 +132,17 @@ else
   [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
   exit 127
 fi
+
 # restore blocks.log from cloud storage
 echo "Restoring Blocks.log from Cloud Storage"
 "${REPLAY_CLIENT_DIR:?}"/manage_blocks_log.sh "$NODEOS_DIR" "restore" $START_BLOCK $END_BLOCK "${SNAPSHOT_PATH}"
 
-echo "Unzip snapshot"
-zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
+
+## when start block 0 no snapshot to process ##
+if [ $START_BLOCK -gt 0 ] && [ -f "${NODEOS_DIR}"/snapshot/snapshot.bin.zst ]; then
+  echo "Unzip snapshot"
+  zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
+fi
 
 ## update status that snapshot is loading ##
 echo "Job status updated to LOADING_SNAPSHOT"
@@ -149,13 +160,27 @@ ${REPLAY_CLIENT_DIR}/background_status_update.sh $ORCH_IP $ORCH_PORT $JOBID "$NO
 BACKGROUND_STATUS_PID=$!
 
 sleep 5
-nodeos \
-     --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
-     --data-dir "${NODEOS_DIR}"/data/ \
-     --config "${CONFIG_DIR}"/sync-config.ini \
-     --terminate-at-block ${END_BLOCK} \
-     --integrity-hash-on-start \
-     &> "${NODEOS_DIR}"/log/nodeos.log
+
+## special treament for sync from genesis, start block 0 ##
+if [ $START_BLOCK == 0 ]; then
+  aws s3 cp s3://chicken-dance/"$SOURCE_TYPE"/"$SOURCE_TYPE"-genesis.json /data/nodeos/genesis.json
+
+  nodeos \
+       --genesis-json "${NODEOS_DIR}"/genesis.json \
+       --data-dir "${NODEOS_DIR}"/data/ \
+       --config "${CONFIG_DIR}"/sync-config.ini \
+       --terminate-at-block ${END_BLOCK} \
+       --integrity-hash-on-start \
+       &> "${NODEOS_DIR}"/log/nodeos.log
+else
+  nodeos \
+      --snapshot "${NODEOS_DIR}"/snapshot/snapshot.bin \
+      --data-dir "${NODEOS_DIR}"/data/ \
+      --config "${CONFIG_DIR}"/sync-config.ini \
+      --terminate-at-block ${END_BLOCK} \
+      --integrity-hash-on-start \
+      &> "${NODEOS_DIR}"/log/nodeos.log
+fi
 
 kill $BACKGROUND_STATUS_PID
 sleep 30
@@ -187,9 +212,13 @@ echo "$END_BLOCK_ACTUAL_INTEGRITY_HASH" > "$NODEOS_DIR"/log/end_integrity_hash.t
 # for example moving to a new version of leap, or upgrade to state db
 # this updates the config and write out to a meta-data file on the server side
 # POST back to config with expected integrity hash
-echo "Updating Configuration with expected integrity hash"
-python3 "${REPLAY_CLIENT_DIR:?}"/config_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
-   --end-block-num "$START_BLOCK" --integrity-hash "$START_BLOCK_ACTUAL_INTEGRITY_HASH"
+if [ $START_BLOCK -gt 0 ]; then
+  echo "Updating Configuration with expected integrity hash"
+  python3 "${REPLAY_CLIENT_DIR:?}"/config_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
+    --end-block-num "$START_BLOCK" --integrity-hash "$START_BLOCK_ACTUAL_INTEGRITY_HASH"
+else
+  echo "Processing from genesis no expected integrity hash to update"
+fi
 
 # terminate read only nodeos in background
 kill $BACKGROUND_NODEOS_PID
