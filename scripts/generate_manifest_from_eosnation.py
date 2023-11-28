@@ -2,6 +2,7 @@
 import json
 import re
 import sys
+import subprocess
 import argparse
 import requests
 from bs4 import BeautifulSoup
@@ -89,6 +90,14 @@ class Manifest:
 
         return match is not None
 
+    def url_to_s3_path(self, url):
+        """convert URL to our S3 Path"""
+        file_parts = url.split('/')
+        if len(file_parts) >= 1:
+            return f"s3://chicken-dance/{self.source_net}/snapshots/{file_parts[-1]}"
+
+        return None
+
     def build(self):
         """constructs the manifest"""
 
@@ -111,10 +120,9 @@ class Manifest:
                     # list of block heights will use this to calc end_block_id
                     self.block_heights.append(start_block_num)
 
-            # split by '/' to get file name
-            file_parts = url.split('/')
-            if len(file_parts) >= 1:
-                record['snapshot_path'] = f"s3://chicken-dance/{self.source_net}/snapshots/{file_parts[-1]}"
+            s3_snapshot_path = self.url_to_s3_path(url)
+            if s3_snapshot_path:
+                record['snapshot_path'] = s3_snapshot_path
 
             self.manifest.append(record)
 
@@ -134,15 +142,93 @@ class Manifest:
                 if self.block_heights[index] == record['start_block_id']:
                     if index + 1 < number_of_records:
                         record['end_block_id'] = self.block_heights[index+1]
+                    # found match end this while loop
+                    break
                 index += 1
 
         # remove all items that are not valid, typically very first and last
         self.manifest = [rc for rc in self.manifest \
           if rc['start_block_id'] and rc['end_block_id'] and rc['snapshot_path'] \
           and rc['start_block_id'] < rc['end_block_id']]
+        # lastly clean up
+        self.clean_snapshot_list()
 
     def __str__(self):
         return json.dumps(self.manifest, indent=4)
+
+    def clean_snapshot_list(self):
+        """iterate through URL snapshot and rm entries that are not in manifest"""
+
+        # if manifest does not exist no need to run exit early
+        if len(self.manifest) == 0:
+            return
+
+        # iterate over snapshots
+        # at end delete records with no matches
+        index = 0
+        number_of_snapshots = len(self.snapshots)
+        while index < number_of_snapshots:
+            has_match = False
+            url_file_parts = self.snapshots[index].split('/')
+            if len(url_file_parts) >= 1:
+                snapshot_file = url_file_parts[-1]
+            # iterate over known good manifest list
+            for record in self.manifest:
+                record_file_parts = record['snapshot_path'].split('/')
+                if len(record_file_parts) >= 1:
+                    # match we are done searching
+                    # set flag and exit loop
+                    if snapshot_file == record_file_parts[-1]:
+                        has_match = True
+                        break
+            if not has_match:
+                number_of_snapshots -= 1
+                del self.snapshots[index]
+
+            index += 1
+
+    def upload_snapshots(self):
+        """upload snapshots to cloud storage"""
+
+        loop_max = 5
+        loop_index = 0
+        for url in self.snapshots:
+            if loop_index >= loop_max:
+                break
+            loop_index += 1
+            s3_snapshot_path = self.url_to_s3_path(url)
+            if s3_snapshot_path:
+                # test does file exist already
+                s3_parts = s3_snapshot_path.split('/')
+                if len(s3_parts) > 3:
+                    bucket  = s3_parts[2]
+                    s3_path = '/'.join(s3_parts[3:])
+                    download_file = "/tmp/snapshot.bin.zst"
+                    # build commands
+                    s3_file_exists = ["aws", "s3api", "head-object", \
+                        "--bucket", bucket, "--key", s3_path]
+                    download_cmd = ["curl", "-s", "-o", download_file, url]
+                    upload_cmd = ["aws", "s3", "cp", download_file, s3_snapshot_path]
+                    remove_cmd = ["rm", "download_file"]
+                    # execute
+                    exists_result = subprocess.run(s3_file_exists, \
+                        check=False, capture_output=True, text=True)
+                    if exists_result.returncode != 0:
+                        # file does not exist proceed
+                        print(f"{s3_path} does not exist in cloud store", file=sys.stderr)
+                        download_result = subprocess.run(download_cmd, \
+                            check=True, capture_output=True, text=True)
+                        if download_result != 0:
+                            print(f"unable to download {url} {download_result.stderr}", file=sys.stderr)
+                        else:
+                            subprocess.run(upload_cmd, check=False)
+                            subprocess.run(remove_cmd, check=False)
+                            print(f"successfully uploaded {s3_path}", file=sys.stderr)
+                    else:
+                        print(f"file {s3_path} already exists nothing to upload", file=sys.stderr)
+
+
+
 
 
 if __name__ == '__main__':
@@ -154,6 +240,8 @@ if __name__ == '__main__':
         help='version of snapshot, default v6')
     parser.add_argument('--leap-version', type=str, default='5.0.0',
         help='version of leap, default 5.0.0')
+    parser.add_argument('--upload-snapshots', action=argparse.BooleanOptionalAction, \
+        default=False, help='upload snapshot to cloud storage, warning this takes time')
 
     args = parser.parse_args()
 
@@ -174,4 +262,7 @@ if __name__ == '__main__':
     # strip out whitespace to get name of chain
     CHAIN_NAME = ''.join(args.source_net.lower().split())
     manifest = Manifest(list_of_snapshots, CHAIN_NAME, args.leap_version.lower())
+    if args.upload_snapshots:
+        print("uploading snapshots: warning this can take time", file=sys.stderr)
+        manifest.upload_snapshots()
     print(manifest)
