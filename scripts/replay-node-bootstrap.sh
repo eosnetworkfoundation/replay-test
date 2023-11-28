@@ -5,7 +5,7 @@
 
 ## packages ##
 apt-get update >> /dev/null
-apt-get install -y git unzip jq curl python3
+apt-get install -y git unzip jq curl python3 python3-pip
 
 ## aws cli ##
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
@@ -46,8 +46,8 @@ chmod 777 /data
 ## git scripts for enf-user ##
 sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-test
 
-## add private ip ##
-# MACRO_P echo $ORCH_IP > /home/"${USER}"/orchestration-ip.txt
+## python packages ##
+sudo -i -u "${USER}" pip install bs4
 
 ## create cron tab ##
 # random number of mins to space out startups across many replay nodes

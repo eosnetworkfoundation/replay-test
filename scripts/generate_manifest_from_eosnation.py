@@ -189,13 +189,7 @@ class Manifest:
 
     def upload_snapshots(self):
         """upload snapshots to cloud storage"""
-
-        loop_max = 5
-        loop_index = 0
         for url in self.snapshots:
-            if loop_index >= loop_max:
-                break
-            loop_index += 1
             s3_snapshot_path = self.url_to_s3_path(url)
             if s3_snapshot_path:
                 # test does file exist already
@@ -209,7 +203,7 @@ class Manifest:
                         "--bucket", bucket, "--key", s3_path]
                     download_cmd = ["curl", "-s", "-o", download_file, url]
                     upload_cmd = ["aws", "s3", "cp", download_file, s3_snapshot_path]
-                    remove_cmd = ["rm", "download_file"]
+                    remove_cmd = ["rm", download_file]
                     # execute
                     exists_result = subprocess.run(s3_file_exists, \
                         check=False, capture_output=True, text=True)
@@ -218,7 +212,7 @@ class Manifest:
                         print(f"{s3_path} does not exist in cloud store", file=sys.stderr)
                         download_result = subprocess.run(download_cmd, \
                             check=True, capture_output=True, text=True)
-                        if download_result != 0:
+                        if download_result.returncode != 0:
                             print(f"unable to download {url} {download_result.stderr}", file=sys.stderr)
                         else:
                             subprocess.run(upload_cmd, check=False)
@@ -226,10 +220,6 @@ class Manifest:
                             print(f"successfully uploaded {s3_path}", file=sys.stderr)
                     else:
                         print(f"file {s3_path} already exists nothing to upload", file=sys.stderr)
-
-
-
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

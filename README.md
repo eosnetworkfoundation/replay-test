@@ -52,10 +52,21 @@ Once your replay host is setup you need to ssh into the host and start the job.
 ## Web Dashboard
 You can see the status of jobs, configuration, and summary of replay status by using the webservice on the orchestrator node. Navigate to `http://orchestor.example.com:4000/`.
 
-Many HTTP calls support HTML, JSON, and Text responses. Look at [HTTP Service Calls](docs/http-service-calls.md) for other URL options and Accept encoding options. 
+Many HTTP calls support HTML, JSON, and Text responses. Look at [HTTP Service Calls](docs/http-service-calls.md) for other URL options and Accept encoding options.
 
 ## Termination of Replay Nodes
 Replay nodes are not automatically terminated. To save on hosting costs, it is advisable to terminate the nodes after the replay tests are completed.
 
 ## Testing
 For testing options see [Running Tests](docs/running-tests.md)
+
+## Generating Manifests
+The python script `replay-test/scripts/generate_manifest_from_eosnation.py` will build a manifest off the list of eos nation snapshots.
+
+`python3 generate_manifest_from_eosnation.py --source-net mainnet > full-mainnet-run.json`
+
+### Options
+- `--source-net` Defaults to `mainnet`. Which chain to target. Options include mainnet, kylin, and jungle
+- `--leap-version` Defaults to `5.0.0`. Specify the version of leap to use from the builds
+- `--snapshot-version` Defaults to v6.
+- `--upload-snapshots` Flag takes no values, and defaults to false. This uploads snapshots to AWS S3. Must have `aws cli` and permission to upload.
