@@ -94,7 +94,7 @@ def application(request):
 
             # Handle URL Parameters
             if request.args.get('jobid') is not None:
-                result = jobs.get_job(request.args.get('jobid'))
+                result = jobs.get_job(request.args.get('jobid')) # pylint: disable=used-before-assignment
             elif 'nextjob' in request.args.keys():
                 result = jobs.get_next_job()
             else:
@@ -203,7 +203,7 @@ def application(request):
 
     elif request.path == '/config':
         slice_id = request.args.get('sliceid')
-        this_config = replay_config_manager.get(slice_id)
+        this_config = replay_config_manager.get(slice_id) # pylint: disable=used-before-assignment
 
         # only GET with param
         if request.method == 'GET' and slice_id is not None:
