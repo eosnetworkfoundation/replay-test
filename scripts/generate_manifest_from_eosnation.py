@@ -212,9 +212,11 @@ class Manifest:
                         print(f"{s3_path} does not exist in cloud store", file=sys.stderr)
                         download_result = subprocess.run(download_cmd, \
                             check=True, capture_output=True, text=True)
+                        # check if download succeeded
                         if download_result.returncode != 0:
                             print(f"unable to download {url} {download_result.stderr}", file=sys.stderr)
                         else:
+                            # now upload to cloud and remove from localhost
                             subprocess.run(upload_cmd, check=False)
                             subprocess.run(remove_cmd, check=False)
                             print(f"successfully uploaded {s3_path}", file=sys.stderr)
