@@ -1,6 +1,7 @@
 """Module fetches a job and reserves the status."""
 import re
 import json
+from datetime import datetime
 import argparse
 import sys
 import time
@@ -141,7 +142,11 @@ def update_job(base_url, etag, job):
 
 def pop_job(base_url, max_tries):
     """Fetch a job (GET) that needs a worker; update status to STARTED"""
-    return proccess_job_update(base_url, max_tries, None, {'status':'STARTED'})
+    fields_to_update = {
+        'status': 'STARTED',
+        'start_time': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+    }
+    return proccess_job_update(base_url, max_tries, None, fields_to_update)
 
 def update_job_status(base_url, max_tries, job_id, status):
     """Fetch a job (GET) by id; update status to provided value"""

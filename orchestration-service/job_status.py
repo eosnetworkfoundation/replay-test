@@ -174,6 +174,8 @@ class JobManager:
             self.jobs[jobid].last_block_processed = int(data['last_block_processed'])
         if 'end_time' in data:
             self.jobs[jobid].end_time = data['end_time']
+        if 'start_time' in data and 'status' in data and data['status'] == "STARTED":
+            self.jobs[jobid].start_time = data['start_time']
         if 'actual_integrity_hash' in data:
             self.jobs[jobid].actual_integrity_hash = data['actual_integrity_hash']
 
