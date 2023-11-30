@@ -153,7 +153,7 @@ class Manifest:
                 'leap_version': self.leap_version
             }
             start_block_num = ParseSnapshots.parse_block(url)
-            if start_block_num:
+            if start_block_num or start_block_num == 0:
                 record['start_block_id'] = start_block_num
                 # list of block heights will use this to calc end_block_id
                 self.block_heights.append(start_block_num)
