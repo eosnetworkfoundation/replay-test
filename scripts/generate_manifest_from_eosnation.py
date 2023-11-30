@@ -17,9 +17,38 @@ class ParseSnapshots:
         self.url = url
         self.header_title = header_title
 
+    # needed my own integer check function
+    # `isinstance` was too strict
+    # pylint prefered `isinstance` over `type` check
+    @staticmethod
+    def is_integer(string):
+        """custom check if is int"""
+        if string is None:
+            return False
+
+        if isinstance(string, int):
+            return True
+
+        # Define a regex pattern for a positive integer
+        pattern = r'^\d+$'
+        match = re.match(pattern, string)
+
+        return match is not None
+
+    @staticmethod
+    def parse_block(url):
+        """Parse block from snapshot url"""
+        # Split the string by either '-' or '.'
+        parts = re.split(r'[-.]', url)
+        # 3rd to last is the start block
+        if len(parts) >= 3:
+            if ParseSnapshots.is_integer(parts[-3]):
+                return int(parts[-3])
+        return None
+
     def get_content(self):
         """wrapper function to parse HTML and return snapshots as a list"""
-        return self.get_snapshot_urls(self.get_card_content())
+        return self.get_urls(self.get_card_content())
 
     def get_card_content(self):
         """parses cards and finds the returns HTML body"""
@@ -46,7 +75,7 @@ class ParseSnapshots:
                         return card_content
         return None
 
-    def get_snapshot_urls(self, card_content):
+    def get_urls(self, card_content):
         """given an html list parse it and return the URLs"""
         url_list = []
         if card_content is None:
@@ -63,32 +92,43 @@ class ParseSnapshots:
 
         return url_list
 
+    def filter_by_block_range(self, snapshots, min_block_num, max_block_num):
+        """filter out snapshots outside the given range"""
+        index = 0
+        number_of_snapshots = len(snapshots)
+        filter_snapshots = []
+
+        while index < number_of_snapshots:
+            start_block_num = ParseSnapshots.parse_block(snapshots[index])
+            # if we can't parse block num keep it
+            # if max or min not defined that side is unbounded
+            if not start_block_num:
+                filter_snapshots.append(snapshots[index])
+            else:
+                if (not max_block_num or start_block_num < max_block_num) \
+                    and (not min_block_num or start_block_num > min_block_num):
+                    filter_snapshots.append(snapshots[index])
+            index += 1
+
+        return filter_snapshots
+
 class Manifest:
     """Builds manifest and prints json config from list of snapshots"""
-    def __init__(self, snapshots, source_net, leap_verison):
+    def __init__(self, snapshots, source_net, leap_verison, min_block_increment=500000):
         self.snapshots = snapshots
         self.source_net = source_net
         self.leap_version = leap_verison
+        self.min_block_increment = min_block_increment
         self.block_heights = []
         self.manifest = []
+        # create manifest
         self.build()
-
-    # needed my own integer check function
-    # `isinstance` was too strict
-    # pylint prefered `isinstance` over `type` check
-    def is_integer(self, string):
-        """custom check if is int"""
-        if string is None:
-            return False
-
-        if isinstance(string, int):
-            return True
-
-        # Define a regex pattern for a positive integer
-        pattern = r'^\d+$'
-        match = re.match(pattern, string)
-
-        return match is not None
+        # remove any invalid records
+        self.remove_invalid_records()
+        # now remove snapshots that refer to invalid records
+        self.clean_snapshot_list()
+        # ensure slices are not too frequent
+        self.space_out_slices()
 
     def url_to_s3_path(self, url):
         """convert URL to our S3 Path"""
@@ -110,15 +150,11 @@ class Manifest:
                 'expected_integrity_hash': '',
                 'leap_version': self.leap_version
             }
-            # Split the string by either '-' or '.'
-            parts = re.split(r'[-.]', url)
-            # 3rd to last is the start block
-            if len(parts) >= 3:
-                if self.is_integer(parts[-3]):
-                    start_block_num = int(parts[-3])
-                    record['start_block_id'] = start_block_num
-                    # list of block heights will use this to calc end_block_id
-                    self.block_heights.append(start_block_num)
+            start_block_num = ParseSnapshots.parse_block(url)
+            if start_block_num:
+                record['start_block_id'] = start_block_num
+                # list of block heights will use this to calc end_block_id
+                self.block_heights.append(start_block_num)
 
             s3_snapshot_path = self.url_to_s3_path(url)
             if s3_snapshot_path:
@@ -146,15 +182,11 @@ class Manifest:
                     break
                 index += 1
 
-        # remove all items that are not valid, typically very first and last
+    def remove_invalid_records(self):
+        """remove all items that are not valid, typically very first and last"""
         self.manifest = [rc for rc in self.manifest \
           if rc['start_block_id'] and rc['end_block_id'] and rc['snapshot_path'] \
           and rc['start_block_id'] < rc['end_block_id']]
-        # lastly clean up
-        self.clean_snapshot_list()
-
-    def __str__(self):
-        return json.dumps(self.manifest, indent=4)
 
     def clean_snapshot_list(self):
         """iterate through URL snapshot and rm entries that are not in manifest"""
@@ -186,6 +218,66 @@ class Manifest:
                 del self.snapshots[index]
 
             index += 1
+
+    def space_out_slices(self):
+        """at least min blocks between slices"""
+        index = 0
+        self.block_heights.sort()
+        number_of_slices = len(self.block_heights)
+
+        rm_block_list = []
+        previous_good_block_height = None
+
+        while index < number_of_slices:
+            # first iteration previous_good_block_height is None and not valid
+            if previous_good_block_height:
+                next_desired_block_height = previous_good_block_height + self.min_block_increment
+                # too small remove it
+                # otherwise treat as new good_block_height
+                # decrement size to account for removal
+                if self.block_heights[index] < next_desired_block_height:
+                    if index+1 < number_of_slices:
+                        rm_block_list.append(
+                            {'start': self.block_heights[index],
+                            'end': self.block_heights[index+1]}
+                            )
+                        number_of_slices -= 1
+                        del self.block_heights[index]
+                else:
+                    previous_good_block_height = self.block_heights[index]
+            else:
+                previous_good_block_height = self.block_heights[index]
+            index += 1
+
+        # build up new manifest
+        sparse_manifest = []
+
+        for record in self.manifest:
+            # remapp end block for continuity as we remove slices
+            print (f"processing record with {record['start_block_id']} to {record['end_block_id']} ...", file=sys.stderr)
+            add_record = True
+
+            for blocks in rm_block_list:
+                rm_start_block = blocks['start']
+                new_end = blocks['end']
+
+                if record['end_block_id'] == rm_start_block:
+                    print(f"remapping end {rm_start_block} to {new_end}", file=sys.stderr)
+                    record['end_block_id'] = new_end
+                # remove sections too frequent
+                if record['start_block_id'] == rm_start_block:
+                    print(f"triming too frequent record by removing record with {record['start_block_id']} to {record['end_block_id']}", file=sys.stderr)
+                    add_record = False
+
+            if add_record:
+                print(f"... adding record with {record['start_block_id']} to {record['end_block_id']}", file=sys.stderr)
+                sparse_manifest.append(record)
+        # update at end
+        self.manifest = sparse_manifest
+
+
+    def __str__(self):
+        return json.dumps(self.manifest, indent=4)
 
     def upload_snapshots(self):
         """upload snapshots to cloud storage"""
@@ -232,8 +324,16 @@ if __name__ == '__main__':
         help='version of snapshot, default v6')
     parser.add_argument('--leap-version', type=str, default='5.0.0',
         help='version of leap, default 5.0.0')
+    parser.add_argument('--block-space-between-slices', type=int, default=500000, \
+        help='min number of blocks between slices, cuts down on the number of slices created')
     parser.add_argument('--upload-snapshots', action=argparse.BooleanOptionalAction, \
         default=False, help='upload snapshot to cloud storage, warning this takes time')
+    parser.add_argument('--max-block-height', type=int, default=None, \
+        help='limits manifest by not processing starting block ranges above value')
+    parser.add_argument('--min-block-height', type=int, default=None, \
+        help='limits manifest by not processing starting block ranges below value')
+    parser.add_argument('--debug', action=argparse.BooleanOptionalAction, \
+        default=False, help='print debug stmts to stderr')
 
     args = parser.parse_args()
 
@@ -247,13 +347,23 @@ if __name__ == '__main__':
 
     parser = ParseSnapshots("https://snapshots.eosnation.io/", search_title)
     list_of_snapshots = parser.get_content()
+    # filter only when max or min defined
+    if args.min_block_height or args.min_block_height:
+        list_of_snapshots = parser.filter_by_block_range(
+            list_of_snapshots,
+            args.min_block_height,
+            args.min_block_heigh
+        )
+    # hmm something went wrong
     if not list_of_snapshots:
         print("Failed to match, no sources found", file=sys.stderr)
         sys.exit(1)
 
     # strip out whitespace to get name of chain
     CHAIN_NAME = ''.join(args.source_net.lower().split())
-    manifest = Manifest(list_of_snapshots, CHAIN_NAME, args.leap_version.lower())
+    manifest = Manifest(list_of_snapshots, CHAIN_NAME, args.leap_version.lower(), \
+                        args.block_space_between_slices)
+
     if args.upload_snapshots:
         print("uploading snapshots: warning this can take time", file=sys.stderr)
         manifest.upload_snapshots()
