@@ -150,7 +150,8 @@ class Manifest:
 
         # remove all items that are not valid, typically very first and last
         self.manifest = [rc for rc in self.manifest \
-          if (rc['start_block_id'] or rc['start_block_id'] == 0) and rc['end_block_id'] and rc['snapshot_path'] \
+          if (rc['start_block_id'] or rc['start_block_id'] == 0) \
+          and rc['end_block_id'] and rc['snapshot_path'] \
           and rc['start_block_id'] < rc['end_block_id']]
 
         # lastly clean up
