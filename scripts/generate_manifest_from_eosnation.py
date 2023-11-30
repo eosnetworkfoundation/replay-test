@@ -90,6 +90,8 @@ class ParseSnapshots:
                     if url:
                         url_list.append(url)
 
+        # add one fake snapshot for genesis
+        url_list.append("https://ops.store.eosnation.io/eos-snapshots/snapshot-2018-06-10-01-eos-v6-0000000000.bin.zst") # pylint: disable=line-too-long
         return url_list
 
     def filter_by_block_range(self, snapshots, min_block_num, max_block_num):
