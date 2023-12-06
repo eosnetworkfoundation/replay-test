@@ -5,6 +5,7 @@ import sys
 import subprocess
 import argparse
 import requests
+import logging
 from bs4 import BeautifulSoup
 
 # 1 - Connect to web page and parse out list of snapshots
@@ -55,7 +56,7 @@ class ParseSnapshots:
         # Make a GET request to the URL
         response = requests.get(self.url, timeout=3)
         if response.status_code != 200:
-            print("Failed to fetch the URL", file=sys.stderr)
+            logging.debug("Failed to fetch the URL")
             sys.exit(1)
 
         # Parse the HTML content
@@ -110,6 +111,8 @@ class ParseSnapshots:
                 if (not max_block_num or start_block_num < max_block_num) \
                     and (not min_block_num or start_block_num > min_block_num):
                     filter_snapshots.append(snapshots[index])
+                else:
+                    logging.debug(f"FILTER: removing block range staring at {start_block_num}")
             index += 1
 
         return filter_snapshots
@@ -257,7 +260,7 @@ class Manifest:
 
         for record in self.manifest:
             # remapp end block for continuity as we remove slices
-            print (f"processing record with {record['start_block_id']} to {record['end_block_id']} ...", file=sys.stderr)
+            logging.debug(f"SPACEOUT: processing record with {record['start_block_id']} to {record['end_block_id']} ...")
             add_record = True
 
             for blocks in rm_block_list:
@@ -265,15 +268,15 @@ class Manifest:
                 new_end = blocks['end']
 
                 if record['end_block_id'] == rm_start_block:
-                    print(f"remapping end {rm_start_block} to {new_end}", file=sys.stderr)
+                    logging.debug(f"SPACEOUT: remapping end {rm_start_block} to {new_end}")
                     record['end_block_id'] = new_end
                 # remove sections too frequent
                 if record['start_block_id'] == rm_start_block:
-                    print(f"triming too frequent record by removing record with {record['start_block_id']} to {record['end_block_id']}", file=sys.stderr)
+                    logging.debug(f"SPACEOUT: triming too frequent record by removing record with {record['start_block_id']} to {record['end_block_id']}")
                     add_record = False
 
             if add_record:
-                print(f"... adding record with {record['start_block_id']} to {record['end_block_id']}", file=sys.stderr)
+                logging.debug(f"SPACEOUT:... adding record with {record['start_block_id']} to {record['end_block_id']}")
                 sparse_manifest.append(record)
         # update at end
         self.manifest = sparse_manifest
@@ -304,19 +307,19 @@ class Manifest:
                         check=False, capture_output=True, text=True)
                     if exists_result.returncode != 0:
                         # file does not exist proceed
-                        print(f"{s3_path} does not exist in cloud store", file=sys.stderr)
+                        logging.debug(f"UPLOAD: {s3_path} does not exist in cloud store")
                         download_result = subprocess.run(download_cmd, \
                             check=True, capture_output=True, text=True)
                         # check if download succeeded
                         if download_result.returncode != 0:
-                            print(f"unable to download {url} {download_result.stderr}", file=sys.stderr)
+                            logging.debug(f"UPLOAD: unable to download {url} {download_result.stderr}")
                         else:
                             # now upload to cloud and remove from localhost
                             subprocess.run(upload_cmd, check=False)
                             subprocess.run(remove_cmd, check=False)
-                            print(f"successfully uploaded {s3_path}", file=sys.stderr)
+                            logging.debug(f"UPLOAD: successfully uploaded {s3_path}")
                     else:
-                        print(f"file {s3_path} already exists nothing to upload", file=sys.stderr)
+                        logging.debug(f"UPLOAD: file {s3_path} already exists nothing to upload")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -340,6 +343,11 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.ERROR)
+
     search_title = f"{args.source_net} - {args.snapshot_version}"
     if args.source_net.lower() == "mainnet":
         search_title = f"EOS Mainnet - {args.snapshot_version}"
@@ -351,15 +359,17 @@ if __name__ == '__main__':
     parser = ParseSnapshots("https://snapshots.eosnation.io/", search_title)
     list_of_snapshots = parser.get_content()
     # filter only when max or min defined
-    if args.min_block_height or args.min_block_height:
+    if args.min_block_height or args.max_block_height:
         list_of_snapshots = parser.filter_by_block_range(
             list_of_snapshots,
             args.min_block_height,
-            args.min_block_heigh
+            args.max_block_height
         )
+    else:
+        logging.debug("FILTER: no filter to run")
     # hmm something went wrong
     if not list_of_snapshots:
-        print("Failed to match, no sources found", file=sys.stderr)
+        logging.error("Failed to match, no sources found")
         sys.exit(1)
 
     # strip out whitespace to get name of chain
@@ -368,6 +378,6 @@ if __name__ == '__main__':
                         args.block_space_between_slices)
 
     if args.upload_snapshots:
-        print("uploading snapshots: warning this can take time", file=sys.stderr)
+        logging.warning("uploading snapshots: warning this can take time")
         manifest.upload_snapshots()
     print(manifest)

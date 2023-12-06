@@ -34,4 +34,4 @@ if __name__ == '__main__':
         if not block['checked']:
             print(f"Error: start block id {key} does not have following record")
         else:
-            print(f"Validated range {key} to {block['end_block_id']}")
+            print(f"Good: Validated range {key} to {block['end_block_id']}")
