@@ -1,6 +1,7 @@
 """modules needed for web application"""
 import argparse
 import json
+import logging
 import sys
 from werkzeug.wrappers import Request, Response
 from werkzeug.serving import run_simple
@@ -145,6 +146,12 @@ def application(request):
             # expects id to exist
             if not 'job_id' in data:
                 data['job_id'] = request.args.get('jobid')
+
+            # log timings for completed jobs
+            if data['status'] == 'COMPLETE':
+                # pylint: disable=used-before-assignment
+                logger.info("Completed Job, starttime: %s, endtime: %s, jobid: %s",
+                    data['start_time'], data['end_time'], data['job_id'])
             # check bool success for set_job to ensure valid data
             if jobs.set_job(data):
                 stringified = str(
@@ -280,8 +287,19 @@ to manage tests to replay on the antelope blockchain')
     parser.add_argument('--config', '-c', type=str, help='Path to config json')
     parser.add_argument('--port', type=int, default=4000, help='Port for web service')
     parser.add_argument('--host', type=str, default='0.0.0.0', help='Listening service name or ip')
+    parser.add_argument('--log', type=str, default="~/orchestration.log",
+        help="log file for service")
 
     args = parser.parse_args()
+
+    # setup logging
+    logging.basicConfig(filename=args.log,
+            encoding='utf-8',
+            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+            datefmt='%H:%M:%S',
+            level=logging.DEBUG)
+    logging.info("Orchestration Web Service Starting Up")
+    logger = logging.getLogger('OrchWebSrv')
 
     # remove this if Local config works
     if args.config is None:
