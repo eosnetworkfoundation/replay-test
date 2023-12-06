@@ -17,4 +17,7 @@ sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-te
 sudo -i -u "${USER}" pip install datetime argparse werkzeug bs4
 
 ## startup service in background ##
-sudo -i -u "${USER}" python3 /home/"${USER}"/replay-test/orchestration-service/web_service.py --config /home/"${USER}"/replay-test/meta-data/test-simple-jobs.json --host 0.0.0.0 &
+sudo -i -u "${USER}" python3 /home/"${USER}"/replay-test/orchestration-service/web_service.py \
+    --config /home/"${USER}"/replay-test/meta-data/full-production-run-20231130.json \
+    --host 0.0.0.0 \
+    --log /home/"${USER}"/orch-complete-timings.log &
