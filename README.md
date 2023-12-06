@@ -63,10 +63,16 @@ For testing options see [Running Tests](docs/running-tests.md)
 ## Generating Manifests
 The python script `replay-test/scripts/generate_manifest_from_eosnation.py` will build a manifest off the list of eos nation snapshots.
 
-`python3 generate_manifest_from_eosnation.py --source-net mainnet > full-mainnet-run.json`
+Redirect of stdout is needed to separate the debug messages printed on stderr
+`python3 generate_manifest_from_eosnation.py --source-net mainnet > full-mainnet-run.json 1> ./manifest-config.json`  
 
 ### Options
+In this release `block-space-between-slices`, `max-block-height`, and `min-block-height` are experimental.
+
 - `--source-net` Defaults to `mainnet`. Which chain to target. Options include mainnet, kylin, and jungle
 - `--leap-version` Defaults to `5.0.0`. Specify the version of leap to use from the builds
 - `--snapshot-version` Defaults to v6.
 - `--upload-snapshots` Flag takes no values, and defaults to false. This uploads snapshots to AWS S3. Must have `aws cli` and permission to upload.
+- `--block-space-between-slices` Min number of blocks between slices, cuts down on the number of slices created
+- `--max-block-height` Limits manifest by not processing starting block ranges above value
+- `--min-block-height` Limits manifest by not processing starting block ranges below value
