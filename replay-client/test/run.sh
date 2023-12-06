@@ -55,3 +55,4 @@ echo "CONFIG OPERATIONS TESTS PASSED"
 # shutdown service and cleanup
 kill "$WEB_SERVICE_PID"
 rm ../../meta-data/test-modify-jobs.json
+rm orchestration.log

@@ -14,7 +14,7 @@ rm -rf /tmp/aws /tmp/awscliv2.zip
 
 ## git scripts for enf-user ##
 sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-test
-sudo -i -u "${USER}" pip install datetime argparse werkzeug bs4
+sudo -i -u "${USER}" pip install datetime argparse werkzeug bs4 numpy
 
 ## startup service in background ##
 sudo -i -u "${USER}" python3 /home/"${USER}"/replay-test/orchestration-service/web_service.py \

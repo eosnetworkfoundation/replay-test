@@ -287,7 +287,7 @@ to manage tests to replay on the antelope blockchain')
     parser.add_argument('--config', '-c', type=str, help='Path to config json')
     parser.add_argument('--port', type=int, default=4000, help='Port for web service')
     parser.add_argument('--host', type=str, default='0.0.0.0', help='Listening service name or ip')
-    parser.add_argument('--log', type=str, default="~/orchestration.log",
+    parser.add_argument('--log', type=str, default="orchestration.log",
         help="log file for service")
 
     args = parser.parse_args()

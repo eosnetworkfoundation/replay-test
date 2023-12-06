@@ -42,3 +42,4 @@ fi
 # shutdown service clean up file
 kill "$WEB_SERVICE_PID"
 rm ../../meta-data/test-modify-jobs.json
+rm orchestration.log 
