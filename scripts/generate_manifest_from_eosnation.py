@@ -4,8 +4,8 @@ import re
 import sys
 import subprocess
 import argparse
-import requests
 import logging
+import requests
 from bs4 import BeautifulSoup
 
 # 1 - Connect to web page and parse out list of snapshots
@@ -112,7 +112,7 @@ class ParseSnapshots:
                     and (not min_block_num or start_block_num > min_block_num):
                     filter_snapshots.append(snapshots[index])
                 else:
-                    logging.debug(f"FILTER: removing block range staring at {start_block_num}")
+                    logging.debug("FILTER: removing block range staring at %i", start_block_num)
             index += 1
 
         return filter_snapshots
@@ -260,7 +260,8 @@ class Manifest:
 
         for record in self.manifest:
             # remapp end block for continuity as we remove slices
-            logging.debug(f"SPACEOUT: processing record with {record['start_block_id']} to {record['end_block_id']} ...")
+            logging.debug("SPACEOUT: processing record with %i to %i ...",
+                record['start_block_id'], record['end_block_id'])
             add_record = True
 
             for blocks in rm_block_list:
@@ -268,15 +269,18 @@ class Manifest:
                 new_end = blocks['end']
 
                 if record['end_block_id'] == rm_start_block:
-                    logging.debug(f"SPACEOUT: remapping end {rm_start_block} to {new_end}")
+                    logging.debug("SPACEOUT: remapping end %s to %s",
+                        rm_start_block, new_end)
                     record['end_block_id'] = new_end
                 # remove sections too frequent
                 if record['start_block_id'] == rm_start_block:
-                    logging.debug(f"SPACEOUT: triming too frequent record by removing record with {record['start_block_id']} to {record['end_block_id']}")
+                    logging.debug("SPACEOUT: triming, removing record with %i to %i",
+                        record['start_block_id'], record['end_block_id'])
                     add_record = False
 
             if add_record:
-                logging.debug(f"SPACEOUT:... adding record with {record['start_block_id']} to {record['end_block_id']}")
+                logging.debug("SPACEOUT:... adding record with %i to %i",
+                    record['start_block_id'], record['end_block_id'])
                 sparse_manifest.append(record)
         # update at end
         self.manifest = sparse_manifest
@@ -307,19 +311,20 @@ class Manifest:
                         check=False, capture_output=True, text=True)
                     if exists_result.returncode != 0:
                         # file does not exist proceed
-                        logging.debug(f"UPLOAD: {s3_path} does not exist in cloud store")
+                        logging.debug("UPLOAD: %s does not exist in cloud store", s3_path)
                         download_result = subprocess.run(download_cmd, \
                             check=True, capture_output=True, text=True)
                         # check if download succeeded
                         if download_result.returncode != 0:
-                            logging.debug(f"UPLOAD: unable to download {url} {download_result.stderr}")
+                            logging.debug("UPLOAD: unable to download %s %s",
+                                url, download_result.stderr)
                         else:
                             # now upload to cloud and remove from localhost
                             subprocess.run(upload_cmd, check=False)
                             subprocess.run(remove_cmd, check=False)
-                            logging.debug(f"UPLOAD: successfully uploaded {s3_path}")
+                            logging.debug("UPLOAD: successfully uploaded %s", s3_path)
                     else:
-                        logging.debug(f"UPLOAD: file {s3_path} already exists nothing to upload")
+                        logging.debug("UPLOAD: file %s already exists nothing to upload", s3_path)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
