@@ -9,7 +9,7 @@ if [ ! -f "$IP_FILE" ]; then
   exit 1
 fi
 ORCH_IP=$(cat ${IP_FILE})
-if [ -n "${ORCH_IP}" ]; then
+if [ -z "${ORCH_IP}" ]; then
   echo "no ip address in file, ${IP_FILE} cannot connect to orchestration service"
   exit 1
 fi
