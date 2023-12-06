@@ -49,5 +49,8 @@ sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-te
 ## python packages ##
 sudo -i -u "${USER}" pip install bs4
 
+## add private ip ##
+# MACRO_P echo $ORCH_IP > /home/"${USER}"/orchestration-ip.txt
+
 ## create cron tab ##
 echo "* * * * * /home/${USER}/replay-test/replay-client/replay_wrapper_script.sh" | crontab -u ${USER} - && echo "Cron job added successfully"

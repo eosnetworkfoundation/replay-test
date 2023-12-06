@@ -35,14 +35,6 @@ class BlockConfigManager:
         """private function to validate storage types"""
         return self.storage_type in ["s3","filesystem","fs"]
 
-    def get_leap_deb_url(self):
-        """builds url for deb package"""
-        target_os="ubuntu22.04"
-        repo="AntelopeIO/leap"
-        service="github.com"
-        return f"https://{service}/{repo}/releases/download/" \
-            f"v{self.leap_version}/leap_{self.leap_version}-{target_os}_amd64.deb"
-
     def validate_integrity_hash(self, computed_integrity_hash):
         """returns bool compared hash in config (expected) to computed_integrity_hash (actual)"""
         return computed_integrity_hash == self.expected_integrity_hash

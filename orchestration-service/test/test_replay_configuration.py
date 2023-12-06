@@ -33,9 +33,6 @@ def test_initialize_block_manager_ok_with_s3():
     block = BlockConfigManager(records[0],primary_key)
     assert block is not None
     assert block._is_supported_storage_type() is True
-    deb_url = block.get_leap_deb_url()
-    assert deb_url.startswith("https://github.com/AntelopeIO/leap/releases/download/v")
-    assert deb_url.endswith("ubuntu22.04_amd64.deb")
     assert block.validate_integrity_hash("ABCD1234EFGH5678IJKL9012MNOP3456") is True
 
 def test_initialize_block_manager_ok_with_fs():
