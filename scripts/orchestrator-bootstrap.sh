@@ -16,6 +16,9 @@ rm -rf /tmp/aws /tmp/awscliv2.zip
 sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-test
 sudo -i -u "${USER}" pip install datetime argparse werkzeug bs4
 
+## setup log rotate ##
+cp /home/"${USER}"/replay-test/scripts/orchestration-logrotate.conf /etc/logrotate.d/replay-orchestration
+
 ## startup service in background ##
 sudo -i -u "${USER}" python3 /home/"${USER}"/replay-test/orchestration-service/web_service.py \
     --config /home/"${USER}"/replay-test/meta-data/full-production-run-20231130.json \
