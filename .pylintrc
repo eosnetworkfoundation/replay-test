@@ -1,3 +1,7 @@
+[MASTER]
+# mac pylint error could not find numpy
+init-hook='import sys; sys.path.append("/usr/local/lib/python3.10/site-packages")'
+
 [MESSAGES CONTROL]
 
 disable=duplicate-code

@@ -14,7 +14,7 @@ rm -rf /tmp/aws /tmp/awscliv2.zip
 
 ## git scripts for enf-user ##
 sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-test
-sudo -i -u "${USER}" pip install datetime argparse werkzeug bs4
+sudo -i -u "${USER}" pip install datetime argparse werkzeug bs4 numpy
 
 ## setup log rotate ##
 cp /home/"${USER}"/replay-test/scripts/orchestration-logrotate.conf /etc/logrotate.d/replay-orchestration
