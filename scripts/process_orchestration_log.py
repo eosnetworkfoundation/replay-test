@@ -17,38 +17,44 @@ if __name__ == '__main__':
         for log_entry in file:
             # Check if the specific phrase is in the current log_entry
             if "OrchWebSrv INFO Completed Job" in log_entry:
+                complete_record = {}
                 # Print the log_entry or perform other actions
                 for part in log_entry.split(','):
                     if 'starttime' in part:
                         starttimestr = part.split(': ', 1)[1]
-                        starttime = datetime.strptime(starttimestr, '%Y-%m-%dT%H:%M:%S')
+                        complete_record['starttime'] = datetime.strptime(
+                        starttimestr, '%Y-%m-%dT%H:%M:%S')
                     elif 'endtime' in part:
                         endtimestr = part.split(': ', 1)[1]
-                        endtime = datetime.strptime(endtimestr, '%Y-%m-%dT%H:%M:%S')
+                        complete_record['endtime'] = datetime.strptime(
+                        endtimestr, '%Y-%m-%dT%H:%M:%S')
                     elif 'jobid' in part:
-                        jobid = part.split(': ', 1)[1].strip()
+                        complete_record['jobid'] = part.split(': ', 1)[1].strip()
+                    elif 'config' in part:
+                        complete_record['config'] = part.split(': ', 1)[1].strip()
+                    elif 'snapshot' in part:
+                        complete_record['snapshot'] = part.split(': ', 1)[1].strip()
                 # calc elapsed time
-                timedelta = endtime - starttime
-                # Convert the difference to total seconds
-                total_minutes = int(timedelta.total_seconds())/60
-                timings.append(total_minutes)
-                #print(f"Job {jobid} elapsed time in minutes {total_minutes}")
+                timedelta = complete_record['endtime'] - complete_record['starttime']
+                # Convert the difference to total minutes
+                complete_record['total_minutes'] = int(timedelta.total_seconds())/60
+                timings.append(complete_record)
 
     # Calculate average (mean)
-    average = statistics.mean(timings)
+    average = statistics.mean(list(record['total_minutes'] for record in timings))
 
     # Calculate standard deviation
-    std_dev = statistics.stdev(timings)
+    std_dev = statistics.stdev(list(record['total_minutes'] for record in timings))
 
     # Calculate median
-    median = statistics.median(timings)
+    median = statistics.median(list(record['total_minutes'] for record in timings))
 
     # Calculate the 75th and 90th percentiles
-    percentile_75 = np.percentile(timings, 75)
-    percentile_90 = np.percentile(timings, 90)
+    percentile_75 = np.percentile(list(record['total_minutes'] for record in timings), 75)
+    percentile_90 = np.percentile(list(record['total_minutes'] for record in timings), 90)
 
     # get longest
-    longest = max(timings)
+    longest = max(list(record['total_minutes'] for record in timings))
 
     # Print the results
     print("JOB TIMING ALL TIMES IN MINUTES")
@@ -60,3 +66,19 @@ if __name__ == '__main__':
     print(f"75th Percentile: {round(percentile_75,2)}")
     print(f"90th Percentile: {round(percentile_90,2)}")
     print(f"Longest Running Job {round(longest,2)} mins")
+
+    if std_dev > average:
+        print("\nLONG RUNNING JOBS TOP 90%")
+        print("-------------------------")
+        for record in timings:
+            if record['total_minutes'] > percentile_90:
+                # when config and snapshot exist print full
+                # field check for backwards compat
+                if 'config' in record and 'snapshot' in record \
+                    and record['config'] and record['snapshot']:
+                    print(f"Job {record['jobid']}\
+ running time {round(record['total_minutes'],2)}\
+ config {record['config']} with snapshot {record['snapshot']}")
+                else:
+                    print(f"Job {record['jobid']}\
+ running time {round(record['total_minutes'],2)}")

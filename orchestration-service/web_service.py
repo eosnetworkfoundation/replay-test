@@ -150,8 +150,10 @@ def application(request):
             # log timings for completed jobs
             if data['status'] == 'COMPLETE':
                 # pylint: disable=used-before-assignment
-                logger.info("Completed Job, starttime: %s, endtime: %s, jobid: %s",
-                    data['start_time'], data['end_time'], data['job_id'])
+                logger.info("Completed Job, starttime: %s, endtime: %s,\
+ jobid: %s, config: %s, snapshot: %s",
+                    data['start_time'], data['end_time'],
+                    data['job_id'], data['replay_slice_id'], data['snapshot_path'])
             # check bool success for set_job to ensure valid data
             if jobs.set_job(data):
                 stringified = str(
