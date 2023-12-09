@@ -22,7 +22,7 @@ rm /etc/nginx/sites-enabled/default
 ln -s /etc/nginx/sites-available/nginx-replay-test.conf /etc/nginx/sites-enabled/default
 # copy in html, css, js, images
 cp -r /home/"${USER}"/replay-test/webcontent/* /var/www/html/
-sudo systemctl reload nginx
+systemctl reload nginx
 
 ## startup service in background ##
 sudo -i -u "${USER}" python3 /home/"${USER}"/replay-test/orchestration-service/web_service.py \
