@@ -256,10 +256,6 @@ def application(request):
     elif request.path == '/healthcheck':
         return Response("OK",content_type='text/plain; charset=uft-8')
 
-    elif request.path == '/':
-        content = ReportTemplate.home_html_report()
-        return Response(content, content_type='text/html')
-
     elif request.path == '/summary':
         report_obj = create_summary(jobs)
         # Format based on content type
