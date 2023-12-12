@@ -21,6 +21,7 @@ sudo apt install -y unzip python3 python3-pip
 pip install datetime argparse werkzeug
 cd orchestration-service/test
 ./run-pytest.sh
+echo $? # expect 0
 ```
 
 ### Details
@@ -42,6 +43,7 @@ sudo apt install -y unzip python3 python3-pip
 pip install datetime argparse werkzeug
 cd replay-client/tests
 ./run.sh
+echo $? # expect 0
 ```
 
 ### Details

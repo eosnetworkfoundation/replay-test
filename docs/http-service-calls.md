@@ -4,6 +4,7 @@
 - job - gets/sets configuration data for the replay nodes
 - status - gets a replay nodes progress and state
 - config - get/sets the configuration data used to initialize the job
+- summary - progress of current run and reports any failed jobs
 - healthcheck - gets 200/0K always
 
 ## Job
@@ -48,6 +49,23 @@ For the GET request when there are no parameters return statuses for all jobs. R
 
 ### POST
 When running replay tests we don't always known the expected integrity hash. For example when state database is updated, which may come as part of an update the leap version. For that reason we take the integrity hash, after loading a snapshot, as the known good integrity hash at that block height. The `/config` POST request used the `end_block_num` in the body to look up the configuration slice. Following that the POST updates the configuration in memory and flushes back to disk. This persists the integrity hash as the known good, and expected value at `end_block_num`.
+
+## Summary (Progress)
+
+### GET
+Returns the following
+- number of blocks processed
+- total number of blocks to process
+- jobs completed
+- jobs failed
+- jobs remaining
+
+In addition, lists the failed jobs with the status, links to job details, and config slice.
+
+Content Type Support.
+- If the Accepts header is text-html returns html
+- If Accepts header is application/json returns json
+
 
 ## Healthcheck
 Always returns same value used for healthchecks

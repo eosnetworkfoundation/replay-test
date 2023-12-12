@@ -4,8 +4,8 @@
 - We use unbuntu 22.04 OS on a t2.micro instance.
 - You need to setup a private key for your host to support SSH.
 - IAM access allows the node to spin up relay nodes on the command line via `aws ec2 run-instances`
-- Security group opens port 4000 to private IP from replay Nodes
-- Security group opens port 4000 and SSH to administrator IPs (Your IP)
+- Security group opens webservice to private IP from replay Nodes
+- Security group opens webservice and SSH to administrator IPs (Your IP)
 - The User Data setup script may be found under [`scripts/orchestrator-bootstrap.sh`](../scripts/orchestrator-bootstrap.sh)
 
 ## Replay Nodes
