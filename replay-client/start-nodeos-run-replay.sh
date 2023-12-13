@@ -52,6 +52,16 @@ function trap_exit() {
   exit 127
 }
 
+function error_exit() {
+  if [ -n "${JOBID}" ]; then
+    python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
+        --operation update-status --status "ERROR" --job-id ${JOBID}
+  fi
+  echo "Unknown snapshot type ${STORAGE_TYPE}"
+  [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
+  exit 127
+}
+
 ## set status to error if we exit on signal ##
 trap trap_exit INT
 trap trap_exit TERM
@@ -126,11 +136,7 @@ if [ $STORAGE_TYPE = "s3" ]; then
     echo "Warning: No snapshot provided in config or start block is zero (0)"
   fi
 else
-  python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
-        --operation update-status --status "ERROR" --job-id ${JOBID}
-  echo "Unknown snapshot type ${STORAGE_TYPE}"
-  [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
-  exit 127
+  error_exit
 fi
 
 # restore blocks.log from cloud storage
@@ -144,11 +150,7 @@ if [ $START_BLOCK -gt 0 ] && [ -f "${NODEOS_DIR}"/snapshot/snapshot.bin.zst ]; t
   zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
   # sometimes compression format is bad error out on failure
   if [ $? != 0 ]; then
-    python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
-        --operation update-status --status "ERROR" --job-id ${JOBID}
-    echo "Error uncompressing ${SNAPSHOT_PATH}"
-    [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
-    exit 1
+    error_exit
   fi
 fi
 
