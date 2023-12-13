@@ -25,3 +25,7 @@ mv /tmp/replay-node-bootstrap.sh "${SCRIPTS_DIR}/replay-node-bootstrap.sh"
 aws ec2 run-instances --launch-template LaunchTemplateName=${AWS_REPLAY_TEMPLATE},Version=${AWS_REPLAY_TEMPLATE_VERSION} \
 --user-data file://"${SCRIPTS_DIR}"/replay-node-bootstrap.sh \
 --count $NUM_INSTANCES $DRY_RUN > /tmp/aws-run-instance-out.json
+
+# append so you can run several times
+# terminate will clear out the instance file
+grep "InstanceId" /tmp/aws-run-instance-out.json | cut -d':' -f2 | tr -d ' ",' >> "$INSTANCE_FILE"

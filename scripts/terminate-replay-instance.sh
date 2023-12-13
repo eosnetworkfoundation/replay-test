@@ -15,11 +15,12 @@ else
   DRY_RUN=""
 fi
 
-# All instances 
+# All instances
 if [ "$INSTANCE_ID" == "ALL" ]; then
   if [ -f "$INSTANCE_FILE" ]; then
     ALL_INSTANCES=$(paste -s -d ' ' "$INSTANCE_FILE")
     "$TERMINATE_CMD" "$ALL_INSTANCES"
+    rm "$INSTANCE_FILE"
   fi
 # Single instance
 else
