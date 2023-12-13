@@ -4,7 +4,6 @@
 # When ALL provided terminates all instances in the file ~/aws-replay-instances.txt
 
 INSTANCE_FILE="/home/ubuntu/aws-replay-instances.txt"
-TERMINATE_CMD="aws ec2 terminate-instances --instance-ids"
 
 INSTANCE_ID=${1:ALL}
 DRY_RUN=${2}
@@ -19,13 +18,16 @@ fi
 if [ "$INSTANCE_ID" == "ALL" ]; then
   if [ -f "$INSTANCE_FILE" ]; then
     ALL_INSTANCES=$(paste -s -d ' ' "$INSTANCE_FILE")
-    "$TERMINATE_CMD" "$ALL_INSTANCES"
-    rm "$INSTANCE_FILE"
+    aws ec2 terminate-instances --instance-ids "$ALL_INSTANCES" "$DRY_RUN"
+    # not dry-run remove file
+    if [ -z "$DRY_RUN" ]; then
+      rm "$INSTANCE_FILE"
+    fi
   fi
 # Single instance
 else
   if [ -n "$INSTANCE_ID" ]; then
-     "$TERMINATE_CMD" "$INSTANCE_ID"
+     aws ec2 terminate-instances --instance-ids "$INSTANCE_ID" "$DRY_RUN"
   else
     echo "Must provide AWS instance ID or ALL as first arg"
     exit 1
