@@ -21,12 +21,12 @@ Select `LowEndOrchestrator` and use the default template.
 ![OrchTemplaceSelect](docs/images/CDOrchTemplateSelect.png)
 
 ## Updating Orchestrator Job Configuration
-By default the setup will spin up a webservice with [Production Run from Nov 2023](meta-data/full-production-run-20231130.json). To change the job configuration you need to create your own JSON configuration, and restart the service to use the new JSON.
+By default the setup will spin up a webservice with [Production Run from Nov 2023](meta-data/full-production-run-20231130.json). To change the job configuration you need to create your own JSON configuration, and restart the service to use the new JSON. **Note** need to use `nohup` on python webservice to keep the process running after ssh-shell exit. 
 - Create your own JSON following the example formate from `test-simple-jobs.json`
 - Upload the file to the orchestrator node
 - Log into the orchestrator node as `ubuntu` user
 - Kill the existing service named `python3 ... webservice.py`
-- Restart with your configuration `python3 $HOME/replay-test/orchestration-service/web_service.py --config my-config.json --host 0.0.0.0 --log ~/orch-complete-timings.log &`
+- Restart with your configuration `nohup python3 $HOME/replay-test/orchestration-service/web_service.py --config my-config.json --host 0.0.0.0 --log ~/orch-complete-timings.log &`
 
 ## Replay Setup
 You can spin up as many replay nodes as you need. Replay nodes will continuously pick and process new jobs. Each replay host works on one job at a time before picking up the next job. Therefore a small number of replay hosts will process all the jobs given enough time. For example, if there are 100 replay slices configured at most 100 replay hosts, and as few as 1 replay host, may be utilized.
