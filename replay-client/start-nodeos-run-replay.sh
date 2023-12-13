@@ -142,6 +142,14 @@ echo "Restoring Blocks.log from Cloud Storage"
 if [ $START_BLOCK -gt 0 ] && [ -f "${NODEOS_DIR}"/snapshot/snapshot.bin.zst ]; then
   echo "Unzip snapshot"
   zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
+  # sometimes compression format is bad error out on failure
+  if [ $? != 0 ]; then
+    python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
+        --operation update-status --status "ERROR" --job-id ${JOBID}
+    echo "Error uncompressing ${SNAPSHOT_PATH}"
+    [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
+    exit 1
+  fi
 fi
 
 ## update status that snapshot is loading ##
