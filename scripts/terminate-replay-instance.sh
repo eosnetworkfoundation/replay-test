@@ -4,6 +4,10 @@
 # When ALL provided terminates all instances in the file ~/aws-replay-instances.txt
 
 INSTANCE_FILE="/home/ubuntu/aws-replay-instances.txt"
+if [[ ! -e "$INSTANCE_FILE" || ! -s "$INSTANCE_FILE" ]]; then
+  echo "Could not find file ${INSTANCE_FILE} or file is empty"
+  exit 1
+fi
 
 INSTANCE_ID=${1:ALL}
 DRY_RUN=${2}
@@ -11,8 +15,10 @@ DRY_RUN=${2}
 if [ -n "$DRY_RUN" ]; then
   DRY_RUN="--dry-run"
 else
-  DRY_RUN=""
+  DRY_RUN="--no-dry-run"
 fi
+# remove hypens for later string compare
+DRY_RUN_CMPT=$(echo $DRY_RUN | tr -d  '-')
 
 # All instances
 if [ "$INSTANCE_ID" == "ALL" ]; then
@@ -20,7 +26,7 @@ if [ "$INSTANCE_ID" == "ALL" ]; then
     ALL_INSTANCES=$(paste -s -d ' ' "$INSTANCE_FILE")
     aws ec2 terminate-instances --instance-ids "$ALL_INSTANCES" "$DRY_RUN"
     # not dry-run remove file
-    if [ -z "$DRY_RUN" ]; then
+    if [ "$DRY_RUN_CMPT" == "nodryrun" ]; then
       rm "$INSTANCE_FILE"
     fi
   fi
