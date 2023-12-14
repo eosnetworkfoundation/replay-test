@@ -90,7 +90,7 @@ echo "Step 2 of 8: Getting job details from orchestration service"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation pop > /tmp/job.conf.json
 
 # if json result is empty failed to aquire job
-if [ ! -s /tmp/job.conf.json ]; then
+if [[ ! -e "/tmp/job.conf.json" || ! -s "/tmp/job.conf.json" ]]; then
   echo "Failed to aquire job"
   trap_exit
 fi
