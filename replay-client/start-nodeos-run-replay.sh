@@ -139,7 +139,7 @@ if [ $START_BLOCK -gt 0 ] && [ -f "${NODEOS_DIR}"/snapshot/snapshot.bin.zst ]; t
   echo "Unzip snapshot"
   zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
   # sometimes compression format is bad error out on failure
-  if [ $? != 0 ]; then
+  if [ $? -ne 0 ]; then
     echo "Failed to unzip snapshot"
     trap_exit
   fi
