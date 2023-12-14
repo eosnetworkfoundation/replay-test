@@ -17,6 +17,7 @@ done
 
 # remove data
 rm -rf /data/nodeos
+rm /tmp/job.conf.json
 
 # remove package
 rm /home/${USER:?}/*.deb
