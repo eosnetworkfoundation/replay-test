@@ -24,7 +24,7 @@ DRY_RUN_CMPT=$(echo $DRY_RUN | tr -d  '-')
 if [ "$INSTANCE_ID" == "ALL" ]; then
   if [ -f "$INSTANCE_FILE" ]; then
     ALL_INSTANCES=$(paste -s -d ' ' "$INSTANCE_FILE")
-    aws ec2 terminate-instances --instance-ids "$ALL_INSTANCES" "$DRY_RUN"
+    aws ec2 terminate-instances "$DRY_RUN" --instance-ids "$ALL_INSTANCES"
     # not dry-run remove file
     if [ "$DRY_RUN_CMPT" == "nodryrun" ]; then
       rm "$INSTANCE_FILE"
@@ -33,7 +33,7 @@ if [ "$INSTANCE_ID" == "ALL" ]; then
 # Single instance
 else
   if [ -n "$INSTANCE_ID" ]; then
-     aws ec2 terminate-instances --instance-ids "$INSTANCE_ID" "$DRY_RUN"
+     aws ec2 terminate-instances "$DRY_RUN" --instance-ids "$INSTANCE_ID" 
   else
     echo "Must provide AWS instance ID or ALL as first arg"
     exit 1
