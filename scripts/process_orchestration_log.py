@@ -1,15 +1,19 @@
 """Parse Orchestration File and Calculate Job Elapsed Time"""
 import argparse
 import sys
+import requests
+import json
 from datetime import datetime
 import statistics
 import numpy as np
 from replay_configuration import ReplayConfigManager
+from job_status import JobManager
+from job_status import JobStatusEnum
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='helper script to extract elapsed timing from log')
-    parser.add_argument('--log', type=str, help='path to config file')
+    parser.add_argument('--log', type=str, help='path to log file')
     parser.add_argument('--block-times', action=argparse.BooleanOptionalAction, \
         default=False, help='collect times by block range')
     parser.add_argument('--config', type=str, help='path to config file used in run')
@@ -49,14 +53,18 @@ if __name__ == '__main__':
                 timings.append(complete_record)
 
     if args.block_times:
-        replay_config_manager = ReplayConfigManager(args.config)
         for record in timings:
-            block_manager = replay_config_manager.get(record['config'])
-            config = block_manager.as_dict()
-            block_span = config['end_block_id'] - config['start_block_id']
-            average_time = round(record['total_minutes'] / block_span,2)
-            blocks_for_3_hours = round(60 * 3 / average_time,0)
-            print (f"{config['start_block_id']}, {config['end_block_id']}, {average_time}, {blocks_for_3_hours}")
+            job_response = requests.get('http://127.0.0.1:4000/job',
+                headers = {'Accept': 'application/json'},
+                params = {'jobid':  record['jobid']} )
+            if job_response.status_code == 200:
+                this_job = json.loads(job_response.content.decode('utf-8'))
+                if this_job['end_block_num'] > this_job['start_block_num']:
+                    block_span = this_job['end_block_num'] - this_job['start_block_num']
+                    avg_time_per_block = record['total_minutes'] * 60 / block_span
+                    num_blocks_3_hr_window = 60 * 60 * 3 / avg_time_per_block
+                    slices = block_span / num_blocks_3_hr_window
+                    print(f"{this_job['start_block_num']}, {this_job['end_block_num']}, {round(avg_time_per_block,2)}, {round(slices,0)}")
     else:
         # Calculate average (mean)
         average = statistics.mean(list(record['total_minutes'] for record in timings))
