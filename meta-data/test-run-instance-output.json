@@ -1,0 +1,632 @@
+{
+    "Groups": [],
+    "Instances": [
+        {
+            "AmiLaunchIndex": 3,
+            "ImageId": "ami-053b0d53c279acc90",
+            "InstanceId": "i-06ffa0960fec3a93d",
+            "InstanceType": "m5a.8xlarge",
+            "KeyName": "aws-chicken-start",
+            "LaunchTime": "2023-12-13T00:56:43+00:00",
+            "Monitoring": {
+                "State": "disabled"
+            },
+            "Placement": {
+                "AvailabilityZone": "us-east-1f",
+                "GroupName": "",
+                "Tenancy": "default"
+            },
+            "PrivateDnsName": "ip-172-31-64-233.ec2.internal",
+            "PrivateIpAddress": "172.31.64.233",
+            "ProductCodes": [],
+            "PublicDnsName": "",
+            "State": {
+                "Code": 0,
+                "Name": "pending"
+            },
+            "StateTransitionReason": "",
+            "SubnetId": "subnet-0b9517f11e9684b3b",
+            "VpcId": "vpc-0b73072d237d7afec",
+            "Architecture": "x86_64",
+            "BlockDeviceMappings": [],
+            "ClientToken": "c6b39961-a7d2-4656-bf71-e4b3b2abacbf",
+            "EbsOptimized": false,
+            "EnaSupport": true,
+            "Hypervisor": "xen",
+            "IamInstanceProfile": {
+                "Arn": "arn:aws:iam::087045697350:instance-profile/EC2-ReadWrite-All-S3-Buckets",
+                "Id": "AIPARIRCT55DB7GCSCCMG"
+            },
+            "NetworkInterfaces": [
+                {
+                    "Attachment": {
+                        "AttachTime": "2023-12-13T00:56:43+00:00",
+                        "AttachmentId": "eni-attach-03dd269980ffc1d7b",
+                        "DeleteOnTermination": true,
+                        "DeviceIndex": 0,
+                        "Status": "attaching",
+                        "NetworkCardIndex": 0
+                    },
+                    "Description": "",
+                    "Groups": [
+                        {
+                            "GroupName": "ChickenReplayHost_v1",
+                            "GroupId": "sg-04f895bd6442b69b5"
+                        }
+                    ],
+                    "Ipv6Addresses": [],
+                    "MacAddress": "16:7c:ae:37:2c:af",
+                    "NetworkInterfaceId": "eni-01529759dc563d3c8",
+                    "OwnerId": "087045697350",
+                    "PrivateDnsName": "ip-172-31-64-233.ec2.internal",
+                    "PrivateIpAddress": "172.31.64.233",
+                    "PrivateIpAddresses": [
+                        {
+                            "Primary": true,
+                            "PrivateDnsName": "ip-172-31-64-233.ec2.internal",
+                            "PrivateIpAddress": "172.31.64.233"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Status": "in-use",
+                    "SubnetId": "subnet-0b9517f11e9684b3b",
+                    "VpcId": "vpc-0b73072d237d7afec",
+                    "InterfaceType": "interface"
+                }
+            ],
+            "RootDeviceName": "/dev/sda1",
+            "RootDeviceType": "ebs",
+            "SecurityGroups": [
+                {
+                    "GroupName": "ChickenReplayHost_v1",
+                    "GroupId": "sg-04f895bd6442b69b5"
+                }
+            ],
+            "SourceDestCheck": true,
+            "StateReason": {
+                "Code": "pending",
+                "Message": "pending"
+            },
+            "Tags": [
+                {
+                    "Key": "aws:ec2launchtemplate:id",
+                    "Value": "lt-0b54481e181c2d49c"
+                },
+                {
+                    "Key": "aws:ec2launchtemplate:version",
+                    "Value": "13"
+                }
+            ],
+            "VirtualizationType": "hvm",
+            "CpuOptions": {
+                "CoreCount": 16,
+                "ThreadsPerCore": 2
+            },
+            "CapacityReservationSpecification": {
+                "CapacityReservationPreference": "open"
+            },
+            "MetadataOptions": {
+                "State": "pending",
+                "HttpTokens": "optional",
+                "HttpPutResponseHopLimit": 1,
+                "HttpEndpoint": "enabled",
+                "HttpProtocolIpv6": "disabled",
+                "InstanceMetadataTags": "disabled"
+            },
+            "EnclaveOptions": {
+                "Enabled": false
+            },
+            "PrivateDnsNameOptions": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            },
+            "MaintenanceOptions": {
+                "AutoRecovery": "default"
+            },
+            "CurrentInstanceBootMode": "legacy-bios"
+        },
+        {
+            "AmiLaunchIndex": 4,
+            "ImageId": "ami-053b0d53c279acc90",
+            "InstanceId": "i-0215f006774a2feb4",
+            "InstanceType": "m5a.8xlarge",
+            "KeyName": "aws-chicken-start",
+            "LaunchTime": "2023-12-13T00:56:43+00:00",
+            "Monitoring": {
+                "State": "disabled"
+            },
+            "Placement": {
+                "AvailabilityZone": "us-east-1f",
+                "GroupName": "",
+                "Tenancy": "default"
+            },
+            "PrivateDnsName": "ip-172-31-69-29.ec2.internal",
+            "PrivateIpAddress": "172.31.69.29",
+            "ProductCodes": [],
+            "PublicDnsName": "",
+            "State": {
+                "Code": 0,
+                "Name": "pending"
+            },
+            "StateTransitionReason": "",
+            "SubnetId": "subnet-0b9517f11e9684b3b",
+            "VpcId": "vpc-0b73072d237d7afec",
+            "Architecture": "x86_64",
+            "BlockDeviceMappings": [],
+            "ClientToken": "c6b39961-a7d2-4656-bf71-e4b3b2abacbf",
+            "EbsOptimized": false,
+            "EnaSupport": true,
+            "Hypervisor": "xen",
+            "IamInstanceProfile": {
+                "Arn": "arn:aws:iam::087045697350:instance-profile/EC2-ReadWrite-All-S3-Buckets",
+                "Id": "AIPARIRCT55DB7GCSCCMG"
+            },
+            "NetworkInterfaces": [
+                {
+                    "Attachment": {
+                        "AttachTime": "2023-12-13T00:56:43+00:00",
+                        "AttachmentId": "eni-attach-04d7efbc9385cfe19",
+                        "DeleteOnTermination": true,
+                        "DeviceIndex": 0,
+                        "Status": "attaching",
+                        "NetworkCardIndex": 0
+                    },
+                    "Description": "",
+                    "Groups": [
+                        {
+                            "GroupName": "ChickenReplayHost_v1",
+                            "GroupId": "sg-04f895bd6442b69b5"
+                        }
+                    ],
+                    "Ipv6Addresses": [],
+                    "MacAddress": "16:6d:5b:40:ea:3f",
+                    "NetworkInterfaceId": "eni-05e670155e55334ac",
+                    "OwnerId": "087045697350",
+                    "PrivateDnsName": "ip-172-31-69-29.ec2.internal",
+                    "PrivateIpAddress": "172.31.69.29",
+                    "PrivateIpAddresses": [
+                        {
+                            "Primary": true,
+                            "PrivateDnsName": "ip-172-31-69-29.ec2.internal",
+                            "PrivateIpAddress": "172.31.69.29"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Status": "in-use",
+                    "SubnetId": "subnet-0b9517f11e9684b3b",
+                    "VpcId": "vpc-0b73072d237d7afec",
+                    "InterfaceType": "interface"
+                }
+            ],
+            "RootDeviceName": "/dev/sda1",
+            "RootDeviceType": "ebs",
+            "SecurityGroups": [
+                {
+                    "GroupName": "ChickenReplayHost_v1",
+                    "GroupId": "sg-04f895bd6442b69b5"
+                }
+            ],
+            "SourceDestCheck": true,
+            "StateReason": {
+                "Code": "pending",
+                "Message": "pending"
+            },
+            "Tags": [
+                {
+                    "Key": "aws:ec2launchtemplate:id",
+                    "Value": "lt-0b54481e181c2d49c"
+                },
+                {
+                    "Key": "aws:ec2launchtemplate:version",
+                    "Value": "13"
+                }
+            ],
+            "VirtualizationType": "hvm",
+            "CpuOptions": {
+                "CoreCount": 16,
+                "ThreadsPerCore": 2
+            },
+            "CapacityReservationSpecification": {
+                "CapacityReservationPreference": "open"
+            },
+            "MetadataOptions": {
+                "State": "pending",
+                "HttpTokens": "optional",
+                "HttpPutResponseHopLimit": 1,
+                "HttpEndpoint": "enabled",
+                "HttpProtocolIpv6": "disabled",
+                "InstanceMetadataTags": "disabled"
+            },
+            "EnclaveOptions": {
+                "Enabled": false
+            },
+            "PrivateDnsNameOptions": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            },
+            "MaintenanceOptions": {
+                "AutoRecovery": "default"
+            },
+            "CurrentInstanceBootMode": "legacy-bios"
+        },
+        {
+            "AmiLaunchIndex": 1,
+            "ImageId": "ami-053b0d53c279acc90",
+            "InstanceId": "i-0eb6e1389971ab0a4",
+            "InstanceType": "m5a.8xlarge",
+            "KeyName": "aws-chicken-start",
+            "LaunchTime": "2023-12-13T00:56:43+00:00",
+            "Monitoring": {
+                "State": "disabled"
+            },
+            "Placement": {
+                "AvailabilityZone": "us-east-1f",
+                "GroupName": "",
+                "Tenancy": "default"
+            },
+            "PrivateDnsName": "ip-172-31-69-68.ec2.internal",
+            "PrivateIpAddress": "172.31.69.68",
+            "ProductCodes": [],
+            "PublicDnsName": "",
+            "State": {
+                "Code": 0,
+                "Name": "pending"
+            },
+            "StateTransitionReason": "",
+            "SubnetId": "subnet-0b9517f11e9684b3b",
+            "VpcId": "vpc-0b73072d237d7afec",
+            "Architecture": "x86_64",
+            "BlockDeviceMappings": [],
+            "ClientToken": "c6b39961-a7d2-4656-bf71-e4b3b2abacbf",
+            "EbsOptimized": false,
+            "EnaSupport": true,
+            "Hypervisor": "xen",
+            "IamInstanceProfile": {
+                "Arn": "arn:aws:iam::087045697350:instance-profile/EC2-ReadWrite-All-S3-Buckets",
+                "Id": "AIPARIRCT55DB7GCSCCMG"
+            },
+            "NetworkInterfaces": [
+                {
+                    "Attachment": {
+                        "AttachTime": "2023-12-13T00:56:43+00:00",
+                        "AttachmentId": "eni-attach-0c24da8c5b7e7f4f4",
+                        "DeleteOnTermination": true,
+                        "DeviceIndex": 0,
+                        "Status": "attaching",
+                        "NetworkCardIndex": 0
+                    },
+                    "Description": "",
+                    "Groups": [
+                        {
+                            "GroupName": "ChickenReplayHost_v1",
+                            "GroupId": "sg-04f895bd6442b69b5"
+                        }
+                    ],
+                    "Ipv6Addresses": [],
+                    "MacAddress": "16:16:1c:b3:9f:61",
+                    "NetworkInterfaceId": "eni-0cb1e036a227ec20c",
+                    "OwnerId": "087045697350",
+                    "PrivateDnsName": "ip-172-31-69-68.ec2.internal",
+                    "PrivateIpAddress": "172.31.69.68",
+                    "PrivateIpAddresses": [
+                        {
+                            "Primary": true,
+                            "PrivateDnsName": "ip-172-31-69-68.ec2.internal",
+                            "PrivateIpAddress": "172.31.69.68"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Status": "in-use",
+                    "SubnetId": "subnet-0b9517f11e9684b3b",
+                    "VpcId": "vpc-0b73072d237d7afec",
+                    "InterfaceType": "interface"
+                }
+            ],
+            "RootDeviceName": "/dev/sda1",
+            "RootDeviceType": "ebs",
+            "SecurityGroups": [
+                {
+                    "GroupName": "ChickenReplayHost_v1",
+                    "GroupId": "sg-04f895bd6442b69b5"
+                }
+            ],
+            "SourceDestCheck": true,
+            "StateReason": {
+                "Code": "pending",
+                "Message": "pending"
+            },
+            "Tags": [
+                {
+                    "Key": "aws:ec2launchtemplate:id",
+                    "Value": "lt-0b54481e181c2d49c"
+                },
+                {
+                    "Key": "aws:ec2launchtemplate:version",
+                    "Value": "13"
+                }
+            ],
+            "VirtualizationType": "hvm",
+            "CpuOptions": {
+                "CoreCount": 16,
+                "ThreadsPerCore": 2
+            },
+            "CapacityReservationSpecification": {
+                "CapacityReservationPreference": "open"
+            },
+            "MetadataOptions": {
+                "State": "pending",
+                "HttpTokens": "optional",
+                "HttpPutResponseHopLimit": 1,
+                "HttpEndpoint": "enabled",
+                "HttpProtocolIpv6": "disabled",
+                "InstanceMetadataTags": "disabled"
+            },
+            "EnclaveOptions": {
+                "Enabled": false
+            },
+            "PrivateDnsNameOptions": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            },
+            "MaintenanceOptions": {
+                "AutoRecovery": "default"
+            },
+            "CurrentInstanceBootMode": "legacy-bios"
+        },
+        {
+            "AmiLaunchIndex": 2,
+            "ImageId": "ami-053b0d53c279acc90",
+            "InstanceId": "i-0ad0fd3a88cd5a5c1",
+            "InstanceType": "m5a.8xlarge",
+            "KeyName": "aws-chicken-start",
+            "LaunchTime": "2023-12-13T00:56:43+00:00",
+            "Monitoring": {
+                "State": "disabled"
+            },
+            "Placement": {
+                "AvailabilityZone": "us-east-1f",
+                "GroupName": "",
+                "Tenancy": "default"
+            },
+            "PrivateDnsName": "ip-172-31-75-197.ec2.internal",
+            "PrivateIpAddress": "172.31.75.197",
+            "ProductCodes": [],
+            "PublicDnsName": "",
+            "State": {
+                "Code": 0,
+                "Name": "pending"
+            },
+            "StateTransitionReason": "",
+            "SubnetId": "subnet-0b9517f11e9684b3b",
+            "VpcId": "vpc-0b73072d237d7afec",
+            "Architecture": "x86_64",
+            "BlockDeviceMappings": [],
+            "ClientToken": "c6b39961-a7d2-4656-bf71-e4b3b2abacbf",
+            "EbsOptimized": false,
+            "EnaSupport": true,
+            "Hypervisor": "xen",
+            "IamInstanceProfile": {
+                "Arn": "arn:aws:iam::087045697350:instance-profile/EC2-ReadWrite-All-S3-Buckets",
+                "Id": "AIPARIRCT55DB7GCSCCMG"
+            },
+            "NetworkInterfaces": [
+                {
+                    "Attachment": {
+                        "AttachTime": "2023-12-13T00:56:43+00:00",
+                        "AttachmentId": "eni-attach-001db47e5b11f3465",
+                        "DeleteOnTermination": true,
+                        "DeviceIndex": 0,
+                        "Status": "attaching",
+                        "NetworkCardIndex": 0
+                    },
+                    "Description": "",
+                    "Groups": [
+                        {
+                            "GroupName": "ChickenReplayHost_v1",
+                            "GroupId": "sg-04f895bd6442b69b5"
+                        }
+                    ],
+                    "Ipv6Addresses": [],
+                    "MacAddress": "16:f9:53:bc:c3:c1",
+                    "NetworkInterfaceId": "eni-0d0e27591a85aa5c2",
+                    "OwnerId": "087045697350",
+                    "PrivateDnsName": "ip-172-31-75-197.ec2.internal",
+                    "PrivateIpAddress": "172.31.75.197",
+                    "PrivateIpAddresses": [
+                        {
+                            "Primary": true,
+                            "PrivateDnsName": "ip-172-31-75-197.ec2.internal",
+                            "PrivateIpAddress": "172.31.75.197"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Status": "in-use",
+                    "SubnetId": "subnet-0b9517f11e9684b3b",
+                    "VpcId": "vpc-0b73072d237d7afec",
+                    "InterfaceType": "interface"
+                }
+            ],
+            "RootDeviceName": "/dev/sda1",
+            "RootDeviceType": "ebs",
+            "SecurityGroups": [
+                {
+                    "GroupName": "ChickenReplayHost_v1",
+                    "GroupId": "sg-04f895bd6442b69b5"
+                }
+            ],
+            "SourceDestCheck": true,
+            "StateReason": {
+                "Code": "pending",
+                "Message": "pending"
+            },
+            "Tags": [
+                {
+                    "Key": "aws:ec2launchtemplate:version",
+                    "Value": "13"
+                },
+                {
+                    "Key": "aws:ec2launchtemplate:id",
+                    "Value": "lt-0b54481e181c2d49c"
+                }
+            ],
+            "VirtualizationType": "hvm",
+            "CpuOptions": {
+                "CoreCount": 16,
+                "ThreadsPerCore": 2
+            },
+            "CapacityReservationSpecification": {
+                "CapacityReservationPreference": "open"
+            },
+            "MetadataOptions": {
+                "State": "pending",
+                "HttpTokens": "optional",
+                "HttpPutResponseHopLimit": 1,
+                "HttpEndpoint": "enabled",
+                "HttpProtocolIpv6": "disabled",
+                "InstanceMetadataTags": "disabled"
+            },
+            "EnclaveOptions": {
+                "Enabled": false
+            },
+            "PrivateDnsNameOptions": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            },
+            "MaintenanceOptions": {
+                "AutoRecovery": "default"
+            },
+            "CurrentInstanceBootMode": "legacy-bios"
+        },
+        {
+            "AmiLaunchIndex": 0,
+            "ImageId": "ami-053b0d53c279acc90",
+            "InstanceId": "i-047c3b35b8d076e50",
+            "InstanceType": "m5a.8xlarge",
+            "KeyName": "aws-chicken-start",
+            "LaunchTime": "2023-12-13T00:56:43+00:00",
+            "Monitoring": {
+                "State": "disabled"
+            },
+            "Placement": {
+                "AvailabilityZone": "us-east-1f",
+                "GroupName": "",
+                "Tenancy": "default"
+            },
+            "PrivateDnsName": "ip-172-31-67-112.ec2.internal",
+            "PrivateIpAddress": "172.31.67.112",
+            "ProductCodes": [],
+            "PublicDnsName": "",
+            "State": {
+                "Code": 0,
+                "Name": "pending"
+            },
+            "StateTransitionReason": "",
+            "SubnetId": "subnet-0b9517f11e9684b3b",
+            "VpcId": "vpc-0b73072d237d7afec",
+            "Architecture": "x86_64",
+            "BlockDeviceMappings": [],
+            "ClientToken": "c6b39961-a7d2-4656-bf71-e4b3b2abacbf",
+            "EbsOptimized": false,
+            "EnaSupport": true,
+            "Hypervisor": "xen",
+            "IamInstanceProfile": {
+                "Arn": "arn:aws:iam::087045697350:instance-profile/EC2-ReadWrite-All-S3-Buckets",
+                "Id": "AIPARIRCT55DB7GCSCCMG"
+            },
+            "NetworkInterfaces": [
+                {
+                    "Attachment": {
+                        "AttachTime": "2023-12-13T00:56:43+00:00",
+                        "AttachmentId": "eni-attach-0b3df3a694a26b9e5",
+                        "DeleteOnTermination": true,
+                        "DeviceIndex": 0,
+                        "Status": "attaching",
+                        "NetworkCardIndex": 0
+                    },
+                    "Description": "",
+                    "Groups": [
+                        {
+                            "GroupName": "ChickenReplayHost_v1",
+                            "GroupId": "sg-04f895bd6442b69b5"
+                        }
+                    ],
+                    "Ipv6Addresses": [],
+                    "MacAddress": "16:b9:3b:c8:23:97",
+                    "NetworkInterfaceId": "eni-09e1ac7f411da4d15",
+                    "OwnerId": "087045697350",
+                    "PrivateDnsName": "ip-172-31-67-112.ec2.internal",
+                    "PrivateIpAddress": "172.31.67.112",
+                    "PrivateIpAddresses": [
+                        {
+                            "Primary": true,
+                            "PrivateDnsName": "ip-172-31-67-112.ec2.internal",
+                            "PrivateIpAddress": "172.31.67.112"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Status": "in-use",
+                    "SubnetId": "subnet-0b9517f11e9684b3b",
+                    "VpcId": "vpc-0b73072d237d7afec",
+                    "InterfaceType": "interface"
+                }
+            ],
+            "RootDeviceName": "/dev/sda1",
+            "RootDeviceType": "ebs",
+            "SecurityGroups": [
+                {
+                    "GroupName": "ChickenReplayHost_v1",
+                    "GroupId": "sg-04f895bd6442b69b5"
+                }
+            ],
+            "SourceDestCheck": true,
+            "StateReason": {
+                "Code": "pending",
+                "Message": "pending"
+            },
+            "Tags": [
+                {
+                    "Key": "aws:ec2launchtemplate:id",
+                    "Value": "lt-0b54481e181c2d49c"
+                },
+                {
+                    "Key": "aws:ec2launchtemplate:version",
+                    "Value": "13"
+                }
+            ],
+            "VirtualizationType": "hvm",
+            "CpuOptions": {
+                "CoreCount": 16,
+                "ThreadsPerCore": 2
+            },
+            "CapacityReservationSpecification": {
+                "CapacityReservationPreference": "open"
+            },
+            "MetadataOptions": {
+                "State": "pending",
+                "HttpTokens": "optional",
+                "HttpPutResponseHopLimit": 1,
+                "HttpEndpoint": "enabled",
+                "HttpProtocolIpv6": "disabled",
+                "InstanceMetadataTags": "disabled"
+            },
+            "EnclaveOptions": {
+                "Enabled": false
+            },
+            "PrivateDnsNameOptions": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            },
+            "MaintenanceOptions": {
+                "AutoRecovery": "default"
+            },
+            "CurrentInstanceBootMode": "legacy-bios"
+        }
+    ],
+    "OwnerId": "087045697350",
+    "ReservationId": "r-04c235953dc94e0b9"
+}
