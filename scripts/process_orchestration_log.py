@@ -1,14 +1,11 @@
 """Parse Orchestration File and Calculate Job Elapsed Time"""
 import argparse
 import sys
-import requests
 import json
 from datetime import datetime
 import statistics
+import requests
 import numpy as np
-from replay_configuration import ReplayConfigManager
-from job_status import JobManager
-from job_status import JobStatusEnum
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -56,7 +53,8 @@ if __name__ == '__main__':
         for record in timings:
             job_response = requests.get('http://127.0.0.1:4000/job',
                 headers = {'Accept': 'application/json'},
-                params = {'jobid':  record['jobid']} )
+                params = {'jobid':  record['jobid']},
+                timeout=3 )
             if job_response.status_code == 200:
                 this_job = json.loads(job_response.content.decode('utf-8'))
                 if this_job['end_block_num'] > this_job['start_block_num']:
