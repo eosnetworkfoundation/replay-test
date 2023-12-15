@@ -46,9 +46,9 @@ function trap_exit() {
   fi
   [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
   if [ -n "${JOBID}" ]; then
-    python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
+    python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
   fi
-  echo "Caught signal exiting"
+  echo "Caught signal or detected error exiting"
   exit 127
 }
 
@@ -67,7 +67,7 @@ TUID=$(id -ur)
 ## must not be root to run ##
 if [ "$TUID" -eq 0 ]; then
   echo "Trying to run as root user exiting"
-  exit
+  trap_exit
 fi
 
 ## cleanup previous runs ##
@@ -77,7 +77,7 @@ fi
 volsize=$(df -h /data | awk 'NR==2 {print $4}' | sed 's/G//' | cut -d. -f1)
 if [ ${volsize:-0} -lt 40 ]; then
   echo "/data volume does not exist or does not have 40Gb free space"
-  exit 127
+  trap_exit
 fi
 
 ## directory setup ##
@@ -89,11 +89,10 @@ fi
 echo "Step 2 of 8: Getting job details from orchestration service"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation pop > /tmp/job.conf.json
 
-STATUS=$(cat /tmp/job.conf.json | python3 "${REPLAY_CLIENT_DIR:?}"/parse_json.py "status_code")
-if [ $STATUS -ne 200 ]; then
+# if json result is empty failed to aquire job
+if [[ ! -e "/tmp/job.conf.json" || ! -s "/tmp/job.conf.json" ]]; then
   echo "Failed to aquire job"
-  [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
-  exit 127
+  trap_exit
 fi
 echo "Received job details processing..."
 
@@ -126,11 +125,8 @@ if [ $STORAGE_TYPE = "s3" ]; then
     echo "Warning: No snapshot provided in config or start block is zero (0)"
   fi
 else
-  python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
-        --operation update-status --status "ERROR" --job-id ${JOBID}
   echo "Unknown snapshot type ${STORAGE_TYPE}"
-  [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
-  exit 127
+  trap_exit
 fi
 
 # restore blocks.log from cloud storage
@@ -142,6 +138,11 @@ echo "Restoring Blocks.log from Cloud Storage"
 if [ $START_BLOCK -gt 0 ] && [ -f "${NODEOS_DIR}"/snapshot/snapshot.bin.zst ]; then
   echo "Unzip snapshot"
   zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
+  # sometimes compression format is bad error out on failure
+  if [ $? -ne 0 ]; then
+    echo "Failed to unzip snapshot"
+    trap_exit
+  fi
 fi
 
 ## update status that snapshot is loading ##
