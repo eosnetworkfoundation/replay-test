@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # grep patters to find head block number currently processed
-# accounts for replay node sync and block log sync 
+# accounts for replay node sync and block log sync
 
 NODEOS_DIR=${1:-/data/nodeos}
 
@@ -18,7 +18,7 @@ BLOCK_NUM_FROM_REPLAY=$(grep 'net_plugin.cpp:' "${NODEOS_DIR}"/log/nodeos.log | 
     sed 's/ head //' | tail -1)
 
 # nothing from Block Log or Relay Log Num is Greater
-if [ -z $BLOCK_NUM_FROM_LOG ] || [ $BLOCK_NUM_FROM_REPLAY -gt $BLOCK_NUM_FROM_LOG ]; then
+if [ -z $BLOCK_NUM_FROM_LOG ] || [ ${BLOCK_NUM_FROM_REPLAY:--1} -gt $BLOCK_NUM_FROM_LOG ]; then
   echo "$BLOCK_NUM_FROM_REPLAY"
 else
   echo "$BLOCK_NUM_FROM_LOG"
