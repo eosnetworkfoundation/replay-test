@@ -1,26 +1,29 @@
 """Single node run over entire history with snapshot spaced at specified block heights"""
 import sys
 import subprocess
-import unittest
-import os
 import argparse
 import logging
 from re import sub
 import json
 import requests
+import tomli
 
 # --blocks-log-stride = 2000000
 # --max-retained-block-files = 512
 # --blocks-retained-dir = retained
-CLOUD_STORE = "chicken-dance"
-CLOUD_SOURCE_TYPE = "mainnet"
-CLOUD_BLOCK_DIR = CLOUD_SOURCE_TYPE + "/aggregated_blocks_compressed"
-CLOUD_SNAPSHOP_DIR = CLOUD_SOURCE_TYPE + "/hand-built-snapshots"
-REPLAY_CLIENT_DIR = "/home/enf-replay/replay-test/replay-client"
-CONFIG_DIR = "/home/enf-replay/replay-test/config"
-NODEOS_DIR = "/data/nodeos"
-BLOCKS_RETAINED_DIR = NODEOS_DIR + "/data/nodeos/blocks/retained"
-SNAPSHOT_DIR = NODEOS_DIR + "/data/nodeos/snapshot"
+with open("/Users/eric/eosnetworkfoundation/repos/ENF/replay-test/scripts/single-run-asset-generation/env.toml", "rb") as f:
+    env_data = tomli.load(f)
+
+CLOUD_STORE = env_data['CLOUD_STORE']
+CLOUD_SOURCE_TYPE = env_data['CLOUD_SOURCE_TYPE']
+CLOUD_BLOCK_DIR = env_data['CLOUD_SOURCE_TYPE'] + env_data['CLOUD_BLOCK_DIR']
+CLOUD_SNAPSHOP_DIR = env_data['CLOUD_SOURCE_TYPE'] + env_data['CLOUD_SNAPSHOP_DIR']
+REPLAY_CLIENT_DIR = env_data['REPLAY_CLIENT_DIR']
+CONFIG_DIR = env_data['CONFIG_DIR']
+NODEOS_DIR = env_data['NODEOS_DIR']
+BLOCKS_RETAINED_DIR = env_data['NODEOS_DIR'] + env_data['BLOCKS_RETAINED_DIR']
+SNAPSHOT_DIR = env_data['NODEOS_DIR'] + env_data['SNAPSHOT_DIR']
+BASE_URL = env_data['BASE_URL']
 
 # pylint: disable=too-few-public-methods
 # pylint: disable=R1732
@@ -29,7 +32,7 @@ class S3Interface:
     @staticmethod
     def build_s3_loc(bucket, path):
         """create the path to the s3 location"""
-        return f"s://{bucket.strip('/')}/{path}"
+        return f"s3://{bucket.strip('/')}/{path}"
 
     @staticmethod
     def exists(bucket, s3_path):
@@ -54,13 +57,26 @@ class S3Interface:
 
 
     @staticmethod
-    def download(download_file, url):
+    def download(s3_url, local_file):
         """downloads a file from cloud store"""
-        download_cmd = ["curl", "-s", "-o", download_file, url]
+        download_cmd = ["aws", "s3", "cp", s3_url, local_file]
+        print(download_cmd)
         download_result = subprocess.run(download_cmd, \
             check=False, capture_output=True, text=True)
         if download_result.returncode != 0:
-            logging.error("download of %s failed with %s", url, download_result.stderr)
+            logging.error("download of %s failed with %s", s3_url, download_result.stderr)
+            return {'success': False}
+        return {'success': True}
+
+    @staticmethod
+    def remove(bucket, path):
+        """removes file to cloud store"""
+        s3_loc = S3Interface.build_s3_loc(bucket, path)
+        remove_cmd = ["aws", "s3", "rm", s3_loc]
+        remove_result = subprocess.run(remove_cmd, \
+            check=False, capture_output=True, text=True)
+        if remove_result.returncode != 0:
+            logging.error("upload to %s failed with %s", s3_loc, remove_result.stderr)
             return {'success': False}
         return {'success': True}
 
@@ -244,6 +260,7 @@ class Manifest:
     def __init__(self, file):
         self.manifest = self.parse(file)
         self.manifest = self.expand()
+        self.length = len(self.manifest)
 
     def parse(self,file):
         """open file , parse and sort"""
@@ -305,42 +322,15 @@ class Manifest:
                 return False
         return True
 
+    def len(self):
+        """return num of entries"""
+        return self.length
+
     def __str__(self):
         return_str = ""
         for record in self.manifest.values():
             return_str += f"{record['start_num']}\t{record['end_num']}\t{record['span']}\n"
         return return_str
-
-class TestFileParsing(unittest.TestCase):
-    """unittest class for testing manifest class"""
-    @classmethod
-    def setUpClass(cls):
-        # Create a sample file
-        cls.sample_file_path = 'sample_test_file.tsv'
-        with open(cls.sample_file_path, 'w', encoding='utf-8') as file:
-            file.write("0\t500000\t500000\n")
-            file.write("500000\t2000000\t500000\n")
-            file.write("2000000\t2500000\t500000\n")
-            file.write("2500000\t3000000\t400000\n")
-
-    @classmethod
-    def tearDownClass(cls):
-        # Clean up: Remove the sample file after tests
-        os.remove(cls.sample_file_path)
-
-    def test_manifest(self):
-        """test the manifest using faked file"""
-        test_manifest = Manifest('sample_test_file.tsv')
-        if test_manifest.is_valid():
-            print(test_manifest)
-            print("Valid Manifest")
-        else:
-            print(test_manifest)
-            print("Test Failed: Manifest entries are not contiguous")
-        if len(test_manifest.manifest) == 7:
-            print("Manifest Has Correct Number of Records")
-        else:
-            print(f"Test Failed Manifest has {len(test_manifest.manifest)} records expected 7")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -348,8 +338,6 @@ if __name__ == '__main__':
 snapshots at optimized block spacing based on a file')
     parser.add_argument('--debug', action=argparse.BooleanOptionalAction, \
         default=False, help='print debug stmts to stderr')
-    parser.add_argument('--tests', action=argparse.BooleanOptionalAction, \
-        default=False, help='runs interal tests')
     parser.add_argument('--file', type=str,
         help='manifest of block ranges to take a snapshot')
 
@@ -359,10 +347,10 @@ snapshots at optimized block spacing based on a file')
     else:
         logging.basicConfig(level=logging.ERROR)
 
-    if args.tests:
-        unittest.main()
-    else:
-        manifest = Manifest(args.file)
+
+    manifest = Manifest(args.file)
+    if not manifest.is_valid:
+        sys.exit("Manifest is_valid check failed")
 
         # loop over manifest start up nodoes to sync to end block
         # restart read only, take a snapshot give it a good named
