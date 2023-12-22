@@ -11,7 +11,7 @@ import tomli
 # --blocks-log-stride = 2000000
 # --max-retained-block-files = 512
 # --blocks-retained-dir = retained
-with open("/Users/eric/eosnetworkfoundation/repos/ENF/replay-test/scripts/single-run-asset-generation/env.toml", "rb") as f:
+with open("./scripts/single-run-asset-generation/env.toml", "rb") as f:
     env_data = tomli.load(f)
 
 CLOUD_STORE = env_data['CLOUD_STORE']
@@ -60,7 +60,6 @@ class S3Interface:
     def download(s3_url, local_file):
         """downloads a file from cloud store"""
         download_cmd = ["aws", "s3", "cp", s3_url, local_file]
-        print(download_cmd)
         download_result = subprocess.run(download_cmd, \
             check=False, capture_output=True, text=True)
         if download_result.returncode != 0:

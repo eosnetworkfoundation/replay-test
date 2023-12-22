@@ -78,12 +78,24 @@ class TestS3Interface(unittest.TestCase):
 
     def test_upload(self):
         """test upload, and exists, then upload, and remove"""
-
-    # exists false
-    # upload
-    # exists true
-    # remove
-    # exists false
+        bucket = "chicken-dance"
+        # create sample file to upload
+        hello_up_file = 'hello_world.txt'
+        with open(hello_up_file, 'w', encoding='utf-8') as file:
+            file.write("Hello World!\n")
+        # make sure file does not exist already
+        file_path = "test/" + hello_up_file
+        self.assertTrue(not S3Interface.exists(bucket, file_path))
+        # upload
+        S3Interface.upload(bucket, file_path, hello_up_file)
+        # file should exist
+        self.assertTrue(S3Interface.exists(bucket, file_path))
+        # remove
+        S3Interface.remove(bucket, file_path)
+        # no more file
+        self.assertTrue(not S3Interface.exists(bucket, file_path))
+        # rm local
+        os.remove(hello_up_file)
 
 if __name__ == '__main__':
     unittest.main()
