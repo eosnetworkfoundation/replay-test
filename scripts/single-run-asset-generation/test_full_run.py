@@ -2,7 +2,7 @@
 import unittest
 import os
 import random
-from full_run import Manifest, S3Interface
+from full_run import Manifest, S3Interface, Nodeos, Genesis
 
 class TestFileParsing(unittest.TestCase):
     """unittest class for testing manifest class"""
@@ -96,6 +96,73 @@ class TestS3Interface(unittest.TestCase):
         self.assertTrue(not S3Interface.exists(bucket, file_path))
         # rm local
         os.remove(hello_up_file)
+
+class TestNodeos(unittest.TestCase):
+    """Test for nodeos commands"""
+    def test_sync(self):
+        """Test running a sync and seeing head block move forward"""
+        data_dir="/data/nodeos"
+        config_dir="/home/enf-replay/config"
+        stop_block_height = 30530359
+
+        ro_process = Nodeos.start_readonly(data_dir, config_dir)
+        block_info_before = Nodeos.get_block_state("http://127.0.0.1:8888")
+        self.assertTrue(block_info_before['head_block_num'] > 30000000)
+        self.assertTrue(block_info_before['head_block_num'] < 30530359)
+
+        hash_info_before = Nodeos.get_integrity_hash("http://127.0.0.1:8888")
+        self.assertTrue(len(hash_info_before['integrity_hash']) > 64)
+
+        result = Nodeos.stop_readonly(ro_process)
+        self.assertTrue(result['success'])
+
+        result = Nodeos.start_sync(data_dir, config_dir, stop_block_height, from_genesis=False)
+        self.assertTrue(result['success'])
+
+        ro_process = Nodeos.start_readonly(data_dir, config_dir)
+        block_info_after = Nodeos.get_block_state("http://127.0.0.1:8888")
+        self.assertTrue(block_info_after['head_block_num'] > block_info_before['head_block_num'])
+
+        hash_info_after = Nodeos.get_integrity_hash("http://127.0.0.1:8888")
+        self.assertTrue(len(hash_info_after['integrity_hash']) > 64)
+        self.assertTrue(hash_info_after['integrity_hash'] != hash_info_before['integrity_hash'])
+
+        result = Nodeos.stop_readonly(ro_process)
+        self.assertTrue(result['success'])
+
+    def test_snapshot(self):
+        """get a snapshot and integrity hash from readonly node"""
+        data_dir="/data/nodeos"
+        config_dir="/home/enf-replay/config"
+
+        ro_process = Nodeos.start_readonly(data_dir, config_dir)
+
+        snapshot_info = Nodeos.snapshot("http://127.0.0.1:8888")
+        self.assertTrue(os.path.exists(snapshot_info['snapshot_name']))
+        self.assertTrue(snapshot_info['head_block_num'] > 0)
+
+        result = Nodeos.stop_readonly(ro_process)
+        self.assertTrue(result['success'])
+
+    def test_snapshot_name(self):
+        """test name func"""
+        block_info = {
+            "head_block_time": "2023-12-19T22:55:53.500",
+            "head_block_num": "012344556",
+            "version": 6
+        }
+
+        snapshot_name = Nodeos.build_snapshot_name(block_info)
+        self.assertEqual(snapshot_name, "snapshot-2023-12-19-22-eos-v6-012344556.bin")
+
+
+class TestGenesis(unittest.TestCase):
+    """Test the genesis Name"""
+    def test_name(self):
+        """test cloud name for genesis"""
+        url = Genesis.cloud_url()
+        self.assertEqual(url, "s3://chicken-dance/mainnet/mainnet-genesis.json")
+
 
 if __name__ == '__main__':
     unittest.main()

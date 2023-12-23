@@ -7,6 +7,7 @@ from re import sub
 import json
 import requests
 import tomli
+import numpy
 
 # --blocks-log-stride = 2000000
 # --max-retained-block-files = 512
@@ -42,6 +43,42 @@ class S3Interface:
         exists_result = subprocess.run(s3_file_exists, \
             check=False, capture_output=True, text=True)
         return exists_result.returncode == 0
+
+    @staticmethod
+    def list(bucket, s3_path, name_only=False):
+        """list all files in a directory"""
+
+        s3_dir_path = S3Interface.build_s3_loc(bucket,s3_path)
+        s3_list = ["aws", "s3", "ls", s3_dir_path]
+        s3_list_result = subprocess.run(s3_list, \
+            stdout=subprocess.PIPE, check=False, text=True)
+        listing = []
+
+        if s3_list_result.returncode == 0:
+
+            file_list = s3_list_result.stdout.split('\n')
+
+            for record in file_list:
+
+                datetime = record.split()[0] + " " \
+                    + record.split()[1]
+                size = record.split()[2]
+                name = record.split()[3]
+
+                if name_only:
+                    listing.append(name)
+                else:
+                    listing.append({
+                        "datetime": datetime,
+                        "size": size,
+                        "name": name
+                    })
+        else:
+            logging.error("listing for %s failed", s3_dir_path)
+        return listing
+
+
+
 
     @staticmethod
     def upload(bucket, path, file):
@@ -170,6 +207,7 @@ class Nodeos:
             response_obj['snapshot_name'],
             response_obj['head_block_num'],
             response_obj['head_block_time'])
+        return response_obj
 
     @staticmethod
     def get_integrity_hash(base_url):
@@ -260,6 +298,7 @@ class Manifest:
         self.manifest = self.parse(file)
         self.manifest = self.expand()
         self.length = len(self.manifest)
+        self.slice_instructions = self.ten_slices()
 
     def parse(self,file):
         """open file , parse and sort"""
@@ -306,6 +345,89 @@ class Manifest:
         # sort becuase new entries not added in key order
         return {k: self.manifest[k] for k in sorted(self.manifest)}
 
+    def ten_slices(self):
+        """divide into ten slices, for parallized run,
+        overlapping block ranges to ensure continuity"""
+        total_records = len(self.manifest)
+        slice_size = numpy.floor_divide(total_records, 10)
+
+        counter = slice_size
+        slice_num = 1
+        block_num_start = 0
+        block_num_end = 0
+        last_key = 0
+        instructions = []
+
+        for key in self.manifest.keys():
+            last_key = key
+            counter -= 1
+            # last loop may have a few more rows
+            # so we exclude the last slice and handle it
+            # after the loop finishes
+            if counter <= 0 and slice_num < 9:
+                counter = slice_size
+                logging.debug("ten_slices starting slice %s", slice_num)
+                # end at next 2mil block span with overlap
+                block_num_end = round(key/2000000)*2000000
+                instructions.append({
+                    'slice': slice_num,
+                    'block_start': block_num_start,
+                    'block_end': block_num_end-1,
+                    'manifest_largest_start_num': key
+                })
+                # build the next slice
+                slice_num += 1
+                # start next at 2mil block span with overlap
+                block_num_start = numpy.floor_divide(key,2000000)*2000000
+        # do slice #10
+        block_num_end = round(last_key/2000000)*2000000
+        instructions.append({
+            'slice': slice_num+1,
+            'block_start': block_num_start,
+            'block_end': block_num_end-1,
+            'manifest_largest_start_num': last_key
+        })
+        return instructions
+
+    def print_instructions(self):
+        """Print out what snapshots to load to prep the slices,
+        and what block number to terminate the slice"""
+        logging.debug("instructions has %s entries", len(self.slice_instructions))
+
+        # name only s3 listing
+        snapshot_list = S3Interface.list(CLOUD_STORE, CLOUD_SOURCE_TYPE + "/snapshots", True)
+        snapshot_dict = {}
+        # create a sorted dictionary of the snapshots
+        for file in snapshot_list:
+            block_num = int(file.split('-')[7].split('.')[0])
+            snapshot_dict[block_num] = file
+        snapshot_dict = {k: snapshot_dict[k] for k in sorted(snapshot_dict)}
+
+
+        for record in self.slice_instructions:
+
+            # find right snapshot from our list
+            preceding_block_num = 0
+            snapshot = "NA"
+            for block_num in snapshot_dict.keys():
+                if block_num >= record['block_start']:
+                    break
+                preceding_block_num = block_num
+
+            if preceding_block_num == 0:
+                snapshot = "genesis"
+            else:
+                snapshot = snapshot_dict[preceding_block_num]
+
+            print(f"""
+            ------ Slice {record['slice']} ------
+            Load Snapshot {snapshot}
+            Before Run Sync Until {record['block_start']}
+            Normal sync will end at {record['manifest_largest_start_num']}
+            **NOTE** continue syncing until {record['block_end']} to ensure overlap in block space
+
+            """)
+
     def is_valid(self):
         """one more pass through to validate"""
         max_block_key = 0
@@ -339,6 +461,8 @@ snapshots at optimized block spacing based on a file')
         default=False, help='print debug stmts to stderr')
     parser.add_argument('--file', type=str,
         help='manifest of block ranges to take a snapshot')
+    parser.add_argument('--instructions', action=argparse.BooleanOptionalAction, \
+        default=False, help='instructions on how to setup slices')
 
     args = parser.parse_args()
     if args.debug:
@@ -346,11 +470,16 @@ snapshots at optimized block spacing based on a file')
     else:
         logging.basicConfig(level=logging.ERROR)
 
-
     manifest = Manifest(args.file)
     if not manifest.is_valid:
         sys.exit("Manifest is_valid check failed")
 
+    if args.instructions:
+        logging.debug("printing instructions")
+        manifest.print_instructions()
+    else:
+        logging.debug("NOT printing instructions")
+        # else
         # loop over manifest start up nodoes to sync to end block
         # restart read only, take a snapshot give it a good named
         # restart sync mode to new block range
