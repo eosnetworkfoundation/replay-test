@@ -398,7 +398,7 @@ class Manifest:
         logging.debug("instructions has %s entries", len(self.slice_instructions))
 
         # name only s3 listing
-        snapshot_list = S3Interface.list(CLOUD_STORE, CLOUD_SOURCE_TYPE + "/snapshots", True)
+        snapshot_list = S3Interface.list(CLOUD_STORE, CLOUD_SOURCE_TYPE + "/snapshots/", True)
         snapshot_dict = {}
         # create a sorted dictionary of the snapshots
         for file in snapshot_list:
