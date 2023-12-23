@@ -63,7 +63,7 @@ class S3Interface:
             for record in file_list:
                 logging.debug("file list %s", record)
                 # need 4 items, skip if too few
-                if len(record.split() < 4):
+                if len(record.split()) < 4:
                     continue
 
                 datetime = record.split()[0] + " " \
