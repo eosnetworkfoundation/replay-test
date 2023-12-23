@@ -61,6 +61,7 @@ class S3Interface:
             file_list = [file for file in file_list if file]
 
             for record in file_list:
+                logging.debug("file list %s", record)
 
                 datetime = record.split()[0] + " " \
                     + record.split()[1]
