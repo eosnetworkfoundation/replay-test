@@ -370,7 +370,7 @@ class Manifest:
             # last loop may have a few more rows
             # so we exclude the last slice and handle it
             # after the loop finishes
-            if counter <= 0 and slice_num < 9:
+            if counter <= 0 and slice_num < 10:
                 counter = slice_size
                 logging.debug("ten_slices starting slice %s", slice_num)
                 # end at next 2mil block span with overlap
