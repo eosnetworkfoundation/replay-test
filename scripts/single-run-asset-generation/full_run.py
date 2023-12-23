@@ -57,6 +57,8 @@ class S3Interface:
         if s3_list_result.returncode == 0:
 
             file_list = s3_list_result.stdout.split('\n')
+            # Remove any empty strings from the list
+            file_list = [file for file in file_list if file]
 
             for record in file_list:
 
