@@ -2,6 +2,8 @@
 import unittest
 import os
 import random
+import logging
+import time
 from full_run import Manifest, S3Interface, Nodeos, Genesis
 
 class TestFileParsing(unittest.TestCase):
@@ -136,11 +138,16 @@ class TestNodeos(unittest.TestCase):
         config_dir="/home/enf-replay/config"
 
         ro_process = Nodeos.start_readonly(data_dir, config_dir)
+        logging.debug("sleeping after starting nodeos")
+        time.sleep(30)
+        logging.debug("sleep complete")
 
         snapshot_info = Nodeos.snapshot("http://127.0.0.1:8888")
         self.assertTrue(os.path.exists(snapshot_info['snapshot_name']))
         self.assertTrue(snapshot_info['head_block_num'] > 0)
 
+        logging.debug("another quick sleep")
+        time.sleep(3)
         result = Nodeos.stop_readonly(ro_process)
         self.assertTrue(result['success'])
 
@@ -165,4 +172,5 @@ class TestGenesis(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     unittest.main()

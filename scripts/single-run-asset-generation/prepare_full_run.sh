@@ -10,7 +10,7 @@ replay-client/install-nodeos.sh 5.0.0-rc3
 replay-client/create-nodeos-dir-struct.sh ./config/
 
 # setup path
-PATH=home/enf-replay/nodeos/usr/bin/:${PATH}
+PATH=/home/enf-replay/nodeos/usr/bin/:${PATH}
 export PATH
 
 # get snapshots and end blocks by running full_run.py --instructions
@@ -23,6 +23,7 @@ export PATH
 # SNAP=snapshot-2020-11-11-16-eos-v6-0151927809.bin.zst; END_NUM=152000000
 # SNAP=snapshot-2021-01-17-16-eos-v6-0163499038.bin.zst; END_NUM=164000000
 # SNAP=snapshot-2021-07-11-16-eos-v6-0193719865.bin.zst ; END_NUM=194000000
+# SNAP=snapshot-2022-10-05-16-eos-v6-0271620354.bin.zst ; END_NUM=272000000
 
 aws s3 cp s3://chicken-dance/mainnet/snapshots/${SNAP} /data/nodeos/snapshot
 zstd -d /data/nodeos/snapshot/*.zst

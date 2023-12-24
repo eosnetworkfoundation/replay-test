@@ -9,9 +9,6 @@ import requests
 import tomli
 import numpy
 
-# --blocks-log-stride = 2000000
-# --max-retained-block-files = 512
-# --blocks-retained-dir = retained
 with open("./scripts/single-run-asset-generation/env.toml", "rb") as f:
     env_data = tomli.load(f)
 
@@ -166,8 +163,7 @@ class Nodeos:
             '--config', config_dir + "/readonly-config.ini"]
         # run command in background
         ro_process = subprocess.Popen(start_ro_cmd,
-            bufsize=1024,
-            close_fds=True,
+            shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
 
@@ -388,7 +384,7 @@ class Manifest:
         # do slice #10
         block_num_end = round(last_key/2000000)*2000000
         instructions.append({
-            'slice': slice_num+1,
+            'slice': slice_num,
             'block_start': block_num_start,
             'block_end': block_num_end-1,
             'manifest_largest_start_num': last_key
