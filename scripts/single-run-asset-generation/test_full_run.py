@@ -4,7 +4,10 @@ import os
 import random
 import logging
 import time
-from full_run import Manifest, S3Interface, Nodeos, Genesis
+from s3Interface import S3Interface
+from manifest import Manifest
+from nodeos import Nodeos
+from genesis import Genesis
 
 class TestFileParsing(unittest.TestCase):
     """unittest class for testing manifest class"""
@@ -104,7 +107,7 @@ class TestNodeos(unittest.TestCase):
     def test_sync(self):
         """Test running a sync and seeing head block move forward"""
         data_dir="/data/nodeos"
-        config_dir="/home/enf-replay/config"
+        config_dir="/home/enf-replay/replay-test/config"
         stop_block_height = 30530359
 
         ro_process = Nodeos.start_readonly(data_dir, config_dir)
@@ -135,7 +138,7 @@ class TestNodeos(unittest.TestCase):
     def test_snapshot(self):
         """get a snapshot and integrity hash from readonly node"""
         data_dir="/data/nodeos"
-        config_dir="/home/enf-replay/config"
+        config_dir="/home/enf-replay/replay-test/config"
 
         ro_process = Nodeos.start_readonly(data_dir, config_dir)
         logging.debug("sleeping after starting nodeos")
@@ -162,12 +165,11 @@ class TestNodeos(unittest.TestCase):
         snapshot_name = Nodeos.build_snapshot_name(block_info)
         self.assertEqual(snapshot_name, "snapshot-2023-12-19-22-eos-v6-012344556.bin")
 
-
 class TestGenesis(unittest.TestCase):
     """Test the genesis Name"""
     def test_name(self):
         """test cloud name for genesis"""
-        url = Genesis.cloud_url()
+        url = Genesis.cloud_url("chicken-dance","mainnet")
         self.assertEqual(url, "s3://chicken-dance/mainnet/mainnet-genesis.json")
 
 

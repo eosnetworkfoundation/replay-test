@@ -15,15 +15,15 @@ export PATH
 
 # get snapshots and end blocks by running full_run.py --instructions
 # Genesis END_NUM=0
-# SNAP=snapshot-2019-08-11-16-eos-v6-0073487941.bin.zst; END_NUM=74000000
-# SNAP=snapshot-2020-02-16-16-eos-v6-0105491080.bin.zst ; END_NUM=106000000
-# SNAP=snapshot-2020-05-10-16-eos-v6-0119970792.bin.zst; END_NUM=120000000
-# SNAP=snapshot-2020-06-24-16-eos-v6-0127744602.bin.zst; END_NUM=128000000
-# SNAP=snapshot-2020-08-19-16-eos-v6-0137418534.bin.zst; END_NUM=138000000
-# SNAP=snapshot-2020-11-11-16-eos-v6-0151927809.bin.zst; END_NUM=152000000
-# SNAP=snapshot-2021-01-17-16-eos-v6-0163499038.bin.zst; END_NUM=164000000
-# SNAP=snapshot-2021-07-11-16-eos-v6-0193719865.bin.zst ; END_NUM=194000000
-# SNAP=snapshot-2022-10-05-16-eos-v6-0271620354.bin.zst ; END_NUM=272000000
+# SNAP=snapshot-2019-08-11-16-eos-v6-0073487941.bin.zst; END_NUM=73999999
+# SNAP=snapshot-2020-02-16-16-eos-v6-0105491080.bin.zst ; END_NUM=105999999
+# SNAP=snapshot-2020-05-10-16-eos-v6-0119970792.bin.zst; END_NUM=119999999
+# SNAP=snapshot-2020-06-24-16-eos-v6-0127744602.bin.zst; END_NUM=127999999
+# SNAP=snapshot-2020-08-19-16-eos-v6-0137418534.bin.zst; END_NUM=137999999
+# SNAP=snapshot-2020-11-11-16-eos-v6-0151927809.bin.zst; END_NUM=151999999
+# SNAP=snapshot-2021-01-17-16-eos-v6-0163499038.bin.zst; END_NUM=163999999
+# SNAP=snapshot-2021-07-11-16-eos-v6-0193719865.bin.zst ; END_NUM=193999999
+# SNAP=snapshot-2022-10-05-16-eos-v6-0271620354.bin.zst ; END_NUM=271999999
 
 aws s3 cp s3://chicken-dance/mainnet/snapshots/${SNAP} /data/nodeos/snapshot
 zstd -d /data/nodeos/snapshot/*.zst
