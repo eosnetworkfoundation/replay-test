@@ -50,8 +50,4 @@ snapshots at optimized block spacing based on a file')
         manifest.print_instructions(CLOUD_STORE, CLOUD_SOURCE_TYPE)
     else:
         logging.debug("NOT printing instructions")
-        # else
-        # loop over manifest start up nodoes to sync to end block
-        # restart read only, take a snapshot give it a good named
-        # restart sync mode to new block range
-        # in the back ground blocks logs strided out
+        print(manifest)

@@ -82,6 +82,11 @@ class Manifest:
                 logging.debug("ten_slices starting slice %s", slice_num)
                 # end at next 2mil block span with overlap
                 block_num_end = round(key/2000000)*2000000
+                # start is actually the termination of prep step
+                # so we want to start one block early to capture the desired
+                # block num in our blocks log
+                if block_num_start > 0:
+                    block_num_start -= 1
                 instructions.append({
                     'slice': slice_num,
                     'block_start': block_num_start,
@@ -96,7 +101,7 @@ class Manifest:
         block_num_end = round(last_key/2000000)*2000000
         instructions.append({
             'slice': slice_num,
-            'block_start': block_num_start,
+            'block_start': block_num_start-1,
             'block_end': block_num_end-1,
             'manifest_largest_start_num': last_key
         })
@@ -135,7 +140,7 @@ class Manifest:
             print(f"""
             ------ Slice {record['slice']} ------
             Load Snapshot {snapshot}
-            Before Run Sync Until {record['block_start']-1}
+            Before Run Sync Until {record['block_start']}
             Normal sync will end at {record['manifest_largest_start_num']}
             **NOTE** continue syncing until {record['block_end']} to ensure overlap in block space
 
@@ -162,6 +167,7 @@ class Manifest:
 
     def __str__(self):
         return_str = ""
+        sep=","
         for record in self.manifest.values():
-            return_str += f"{record['start_num']}\t{record['end_num']}\t{record['span']}\n"
+            return_str += f"{record['start_num']}{sep}{record['end_num']}{sep}{record['span']}\n"
         return return_str
