@@ -10,14 +10,6 @@ with open("./scripts/single-run-asset-generation/env.toml", "rb") as f:
 
 CLOUD_STORE = env_data['CLOUD_STORE']
 CLOUD_SOURCE_TYPE = env_data['CLOUD_SOURCE_TYPE']
-CLOUD_BLOCK_DIR = env_data['CLOUD_SOURCE_TYPE'] + env_data['CLOUD_BLOCK_DIR']
-CLOUD_SNAPSHOP_DIR = env_data['CLOUD_SOURCE_TYPE'] + env_data['CLOUD_SNAPSHOP_DIR']
-REPLAY_CLIENT_DIR = env_data['REPLAY_CLIENT_DIR']
-CONFIG_DIR = env_data['CONFIG_DIR']
-NODEOS_DIR = env_data['NODEOS_DIR']
-BLOCKS_RETAINED_DIR = env_data['NODEOS_DIR'] + env_data['BLOCKS_RETAINED_DIR']
-SNAPSHOT_DIR = env_data['NODEOS_DIR'] + env_data['SNAPSHOT_DIR']
-BASE_URL = env_data['BASE_URL']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
