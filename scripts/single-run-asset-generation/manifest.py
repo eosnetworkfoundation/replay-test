@@ -90,7 +90,7 @@ class Manifest:
                 instructions.append({
                     'slice': slice_num,
                     'block_start': block_num_start,
-                    'block_end': block_num_end-1,
+                    'block_end': block_num_end,
                     'manifest_largest_start_num': key
                 })
                 # build the next slice
@@ -102,7 +102,7 @@ class Manifest:
         instructions.append({
             'slice': slice_num,
             'block_start': block_num_start-1,
-            'block_end': block_num_end-1,
+            'block_end': block_num_end,
             'manifest_largest_start_num': last_key
         })
         return instructions
@@ -141,9 +141,7 @@ class Manifest:
             ------ Slice {record['slice']} ------
             Load Snapshot {snapshot}
             Before Run Sync Until {record['block_start']}
-            Normal sync will end at {record['manifest_largest_start_num']}
-            **NOTE** continue syncing until {record['block_end']} to ensure overlap in block space
-
+            Terminate Sync at block {record['block_end']} 
             """)
 
     def is_valid(self):

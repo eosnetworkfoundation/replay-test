@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+[ ! -d /data/nodeos/data/snapshots/archive ] && mkdir -p /data/nodeos/data/snapshots/archive
 for i in /data/nodeos/data/snapshots/snapshot-*.bin.zst
 do
    echo $i
