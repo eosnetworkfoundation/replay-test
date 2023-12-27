@@ -84,9 +84,6 @@ sequenceDiagram
 7. POST completed status for configured block range
    - this is the actual integrity hash for this job
    - the actual integrity hash for the this jobs end block num
-8. retain blocks logs copy over to cloud storage
-   - checks cloud storage for existing blocks log
-   - does not copy over if blocks log exists
 
 Communicates to orchestration service via HTTP
 

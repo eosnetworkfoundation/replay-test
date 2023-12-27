@@ -41,6 +41,6 @@ All scripts are under the `enf-replay` user. The `replay-test` github repository
   - /home/enf-replay/replay-test/replay-client/head_block_num_from_log.sh : pull out the most recent block process from nodeos logs
   - /home/enf-replay/replay-test/replay-client/install-nodoes.sh : pull down deb and install locally
   - /home/enf-replay/replay-test/replay-client/job_operations.py : python script to HTTP POST job updates and status changes
-  - /home/enf-replay/replay-test/replay-client/manage_blocks_log.sh : script to retrieve and store blocks.log from cloud storage
+  - /home/enf-replay/replay-test/replay-client/manage_blocks_log.sh : script to retrieve blocks.log from cloud storage
   - /home/enf-replay/replay-test/replay-client/parse_json.py : parses JSON to bridge access to JSON from shell scripts
-  - /home/enf-replay/replay-test/replay-client/replay-node-cleanup.sh : cleans out previous run, creates a blank slate 
+  - /home/enf-replay/replay-test/replay-client/replay-node-cleanup.sh : cleans out previous run, creates a blank slate
