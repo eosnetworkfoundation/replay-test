@@ -1,4 +1,4 @@
-"""cli commands to interfaces with S3 storage"""
+"""cli commands to interfaces with S3 storage""" # pylint: disable=C0103
 import subprocess
 import logging
 
