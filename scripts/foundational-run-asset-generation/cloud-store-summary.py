@@ -20,8 +20,10 @@ if __name__ == '__main__':
     blocks_list = S3Interface.list(args.bucket, args.block_dir, True)
     snaps_list  = S3Interface.list(args.bucket, args.snap_dir , True)
 
+    MAX_BLOCK_HEIGHT=399000001
+
     complete_block_list = {}
-    for i in range(1, 350000001, 2000000):
+    for i in range(1, MAX_BLOCK_HEIGHT, 2000000):
         complete_block_list[int(i)] = {}
 
     snapshot_dict = {}
@@ -69,18 +71,17 @@ if __name__ == '__main__':
         }
 
     max_line_size=100
+    blocks_line = ""
     count_line = ""
     snapshot_line = ""
-    suppress = False
-
-    print ("blocks: ", end="")
+    suppress = 0
 
     for range in complete_block_list.keys():
         if "blocks" in complete_block_list[range] \
             and complete_block_list[range]['blocks']:
-            print ("+", end="")
+            blocks_line += "+"
         else:
-            print (" ", end="")
+            blocks_line += " "
 
         if "snap_count" in complete_block_list[range] \
             and complete_block_list[range]['snap_count'] > 0:
@@ -96,25 +97,39 @@ if __name__ == '__main__':
             if len(key_as_str) > 8:
                 # replace last 2 char
                 count_line = count_line[:-2] + key_as_str[0] + key_as_str[1] + "0M"
-                suppress = True
+                if len(count_line) < 5:
+                    suppress = 3
+                else:
+                    suppress = 1
             else:
-                if len(count_line) < 1:
-                    count_line = count_line + key_as_str[0]
+                if key_as_str == "1":
+                    count_line = count_line[:-1] + key_as_str
                 else:
                     count_line = count_line[:-1] + key_as_str[0] + "0M"
-                    suppress = True
+                    if len(count_line) < 4:
+                        suppress = 2
+                    else:
+                        suppress = 1
         else:
-            if not suppress:
+
+            if suppress == 0:
                 count_line += "."
-            suppress = False
+            else:
+                suppress -= 1
 
         max_line_size = max_line_size - 1
         if max_line_size < 1:
-            print("E")
-            print(" snaps: "+snapshot_line+"E")
-            print(" count: "+count_line+"E")
+            print("blocks: " + blocks_line + "E")
+            print(" snaps: " + snapshot_line + "E")
+
+            count_line = count_line[:-4] + str(range)[0:3] + "M"
+            print(" count: " + count_line + "E")
+            blocks_line=""
             count_line=""
             snapshot_line=""
             max_line_size=100
 
-    print("")
+    if len(blocks_line) > 2:
+        print("blocks: " + blocks_line + "E")
+        print(" snaps: " + snapshot_line + "E")
+        print(" count: " + count_line+"E")
