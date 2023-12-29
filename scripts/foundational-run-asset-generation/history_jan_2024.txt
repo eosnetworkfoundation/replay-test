@@ -1,0 +1,30 @@
+Running 6 nodes in parallel
+
+Host 1+2 Memory Usage 12/28/2023 - 12/29/2023
+enf-replay@ip-172-31-77-55:~$ cat /proc/3821/statm
+1200769182 2652935 904752 8690 0 1964217 0
+1201059806 3149292 1093720 8690 0 2237098 0
+enf-replay@ip-172-31-79-193:~$ cat /proc/6962/statm
+1200110390 2878003 1736785 8690 0 1239669 0
+1200186898 2992326 1769946 8690 0 1326420 0
+
+export PYTHONPATH=/home/enf-replay/replay-test/scripts/manifest
+python3 scripts/foundational-run-asset-generation/cloud-store-summary.py \
+    --block-dir mainnet/aggregated_blocks_compressed \
+    --snap-dir mainnet/hand-built-snapshots
+
+Dec 27th 2023
+-------------
+blocks: +++++++++++++++                      +++++++                +                                       E
+ snaps: 222313323222222                      2222223                *                                       E
+ count: 1..................40M.................80M................120M................160M..............198ME
+Dec 28th 2023
+-------------
+blocks: ++++++++++++++++++                   ++++++++        +      +                                       E
+ snaps: 222313323222222322                   22222234        9      *                                       E
+ count: 1..................40M.................80M................120M................160M..............198ME
+Dec 29th 2023
+-------------
+blocks: ++++++++++++++++++++++               +++++++++       ++     +   +    +                              E
+ snaps: 2223133232222223223222               222222345       99     *   *    *                              E
+ count: 1..................40M.................80M................120M................160M..................E
