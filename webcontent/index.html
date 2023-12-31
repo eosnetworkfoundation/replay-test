@@ -17,9 +17,17 @@
 }
 </style>
 <script>
-const resultOld = '{"total_blocks": 691154, "blocks_processed": 0, "total_jobs": 3, "jobs_succeeded": 0, "jobs_failed": 1, "failed_jobs": [{"status": "ERROR", "jobid": 4531935696, "configid": 1}]}'
-const result = '{"total_blocks": 691154, "blocks_processed": 0, "total_jobs": 3, "jobs_succeeded": 0, "jobs_failed": 1}'
-const dataObj = JSON.parse(result);
+const result = '{"total_blocks": 691154, "blocks_processed": 0, "total_jobs": 3, "jobs_succeeded": 0, "jobs_failed": 1, "failed_jobs": [{"status": "ERROR", "jobid": 4531935696, "configid": 1}]}'
+const reqHeaders = new Headers();
+reqHeaders.append("Accept", "application/json");
+const response = await fetch("/summary",
+  {
+    method: "GET",
+    headers: reqHeaders,
+  }
+);
+const summary = await response.json();
+const dataObj = JSON.parse(summary);
 </script>
 </head>
 <body>
