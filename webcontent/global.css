@@ -1,0 +1,125 @@
+:root {
+  --text-accent-color: #F29F67;
+  --text-card-color: #1F1F1F;
+  --low-em-color: #999;
+  --text-color: #000000;
+  --main-bg-color: #F4F5F7;
+  --card-bg-color: #FFFFFF;
+  --shadow-color: #888;
+  --allok-color: #4DA761;
+  --warning-color: #E0B50F;
+  --error-color: #F95F53;
+  --action-color: #0D6EFD;
+  --text-size: 16px;
+  --margin: 32px;
+  --gutter: 16px;
+  --media-gutter: 0px;
+  --padding: 4px;
+}
+
+body {
+  background-color: var(--main-bg-color);
+  color: var(--text-color);
+  margin-right: var(--margin);
+  margin-left: var(--margin);
+  font-size: var(--text-size);
+  font-family: 'Lato', sans-serif;
+  font-weight: normal;
+}
+h1 {
+  font-size: 4em;
+}
+h2 {
+  font-size: 3em;
+  margin: 0;
+}
+h3 {
+  font-size: 2em;
+}
+p {
+  display: inline;
+}
+.topbar {
+  border: 1px solid var(--low-em-color);
+  padding: var(--padding);
+  text-align: right;
+}
+.maincontent {
+  border: 1px solid var(--low-em-color);
+  padding-left: var(--media-gutter);
+}
+.navbar {
+  border: 1px solid var(--low-em-color);
+  padding-left: var(--media-gutter);
+}
+.row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.column {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+  flex: 1;
+}
+.navbutton {
+  border: 2px solid var(--card-bg-color);
+  background-color: var(--card-bg-color);
+  margin-top: var(--gutter);
+  margin-bottom: var(--gutter);
+  margin-left: var(--gutter);
+  margin-right: var(--media-gutter);
+  padding: var(--padding);
+  text-align: center;
+  border-radius: 5px;
+  filter: drop-shadow(var(--shadow-color) 0.25rem 0.25rem 0.25rem);
+}
+.navbutton a {
+  text-decoration: none;
+  color: var(--text-color);
+}
+.navicon .material-symbols-outlined {
+  font-size: 3em;
+}
+.card {
+  border: 2px solid var(--card-bg-color);
+  background-color: var(--card-bg-color);
+  margin-top: var(--gutter);
+  margin-bottom: var(--gutter);
+  margin-left: var(--gutter);
+  margin-right: var(--media-gutter);
+  padding: var(--padding);
+  border-radius: 5px;
+  text-align: center;
+}
+.subtext {
+  font-size: 0.75em;
+  color: var(--low-em-color);
+}
+.note {
+  font-size: 1em;
+  font-weight: 100;
+  color: var(--text-color);
+  padding: var(--padding);
+  margin-right: var(--gutter);
+  margin-left: var(--gutter);
+}
+
+@media screen and (min-width: 800px) {
+  :root {
+    --media-gutter: 64px;
+  }
+}
+@media screen and (max-width: 500px) {
+  :root {
+    --media-gutter: 0;
+    --gutter: 8px;
+  }
+}
+
+/*
+https://demo.bootstrapdash.com/star-admin2-pro/template/demo/vertical-default-light/index.html
+https://demo.bootstrapdash.com/star-admin2-pro/template/demo/vertical-default-dark/index.html
+*/
