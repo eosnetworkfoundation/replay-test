@@ -17,7 +17,8 @@
 }
 </style>
 <script>
-const result = '{"total_blocks": 691154, "blocks_processed": 0, "total_jobs": 3, "jobs_succeeded": 0, "jobs_failed": 1, "failed_jobs": [{"status": "ERROR", "jobid": 4531935696, "configid": 1}]}'
+const resultOld = '{"total_blocks": 691154, "blocks_processed": 0, "total_jobs": 3, "jobs_succeeded": 0, "jobs_failed": 1, "failed_jobs": [{"status": "ERROR", "jobid": 4531935696, "configid": 1}]}'
+const result = '{"total_blocks": 691154, "blocks_processed": 0, "total_jobs": 3, "jobs_succeeded": 0, "jobs_failed": 1}'
 const dataObj = JSON.parse(result);
 </script>
 </head>
@@ -87,12 +88,16 @@ document.getElementById("jobs-failed").innerText = dataObj.jobs_failed
 document.getElementById("jobs-succeeded").innerText = dataObj.jobs_succeeded
 var str = ''
 
-dataObj.failed_jobs.forEach(function(job) {
-  str += '<div class="card"> <ul class="failed-job">'
-  str += '<li><a href="/status?sliceid='+ job.configid + '">Job ' + job.jobid + '</a></li>';
-  str += '<li><a href="/config?sliceid='+ job.configid + '">Config ' + job.configid + '</a></li>';
-  str += '</ul></div>'
-});
+if (dataObj.hasOwnProperty('failed_jobs') && dataObj.failed_jobs != undefined) {
+  dataObj.failed_jobs.forEach(function(job) {
+    str += '<div class="card"> <ul class="failed-job">'
+    str += '<li><a href="/status?sliceid='+ job.configid + '">Job ' + job.jobid + '</a></li>';
+    str += '<li><a href="/config?sliceid='+ job.configid + '">Config ' + job.configid + '</a></li>';
+    str += '</ul></div>'
+  });
+} else {
+  str = '<div class="note"><p>No Failed Jobs to Report</p></div>'
+}
 
 document.getElementById("failed-job-list").innerHTML = str;
 </script>
