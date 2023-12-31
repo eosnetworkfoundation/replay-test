@@ -35,6 +35,7 @@ h2 {
 }
 h3 {
   font-size: 2em;
+  margin: 0;
 }
 p {
   display: inline;
@@ -82,6 +83,12 @@ p {
 }
 .navicon .material-symbols-outlined {
   font-size: 3em;
+}
+.maincontent > h2 {
+  margin-top: var(--gutter);
+  margin-bottom: var(--gutter);
+  margin-left: var(--gutter);
+  margin-right: var(--media-gutter);
 }
 .card {
   border: 2px solid var(--card-bg-color);
