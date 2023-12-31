@@ -16,6 +16,10 @@
   'opsz' 24
 }
 </style>
+<script>
+const result = '{"total_blocks": 691154, "blocks_processed": 0, "total_jobs": 3, "jobs_succeeded": 0, "jobs_failed": 1, "failed_jobs": [{"status": "ERROR", "jobid": 4531935696, "configid": 1}]}'
+const dataObj = JSON.parse(result);
+</script>
 </head>
 <body>
 <div class="topbar">
@@ -54,33 +58,43 @@
     <div class="card">
       <p class="subtext">Blocks Processed</p>
       <br/>
-      <h2>35%</h2>
+      <h2 id="blocks-procesed"></h2>
     </div>
     <div class="card">
       <p class="subtext">Jobs Remaining</p>
       <br/>
-      <h2>35</h2>
+      <h2 id="jobs-remaining"></h2>
     </div>
     <div class="card">
       <p class="subtext">Jobs Failed</p>
       <br/>
-      <h2>3</h2>
+      <h2 id="jobs-failed"></h2>
     </div>
     <div class="card">
       <p class="subtext">Jobs Succeeded</p>
       <br/>
-      <h2>350</h2>
+      <h2 id="jobs-succeeded"></h2>
     </div>
   </div>
   <h2>Failed Jobs</h2>
-  <div class="row">
-    <div class="card">
-      <ul class="failed-job">
-        <li><a href=\"/status?sliceid=123\">Job ABCD54</a></li>
-        <li><a href=\"/config?sliceid=123\">Config 123</a></li>
-      </ul>
-    </div>
+  <div class="row" id="failed-job-list">
   </div>
 </div>
+<script>
+document.getElementById("blocks-procesed").innerText = (dataObj.blocks_processed / dataObj.total_blocks)
+document.getElementById("jobs-remaining").innerText = (dataObj.total_jobs - dataObj.jobs_succeeded - dataObj.jobs_failed)
+document.getElementById("jobs-failed").innerText = dataObj.jobs_failed
+document.getElementById("jobs-succeeded").innerText = dataObj.jobs_succeeded
+var str = ''
+
+dataObj.failed_jobs.forEach(function(job) {
+  str += '<div class="card"> <ul class="failed-job">'
+  str += '<li><a href="/status?sliceid='+ job.configid + '">Job ' + job.jobid + '</a></li>';
+  str += '<li><a href="/config?sliceid='+ job.configid + '">Config ' + job.configid + '</a></li>';
+  str += '</ul></div>'
+});
+
+document.getElementById("failed-job-list").innerHTML = str;
+</script>
 </body>
 </html>
