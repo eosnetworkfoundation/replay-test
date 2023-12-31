@@ -90,7 +90,8 @@ const dataObj = JSON.parse(summary);
   </div>
 </div>
 <script>
-document.getElementById("blocks-procesed").innerText = (dataObj.blocks_processed / dataObj.total_blocks)
+const blocksPercent = Math.round(dataObj.blocks_processed / dataObj.total_blocks * 100)
+document.getElementById("blocks-procesed").innerText = blocksPercent + '%'
 document.getElementById("jobs-remaining").innerText = (dataObj.total_jobs - dataObj.jobs_succeeded - dataObj.jobs_failed)
 document.getElementById("jobs-failed").innerText = dataObj.jobs_failed
 document.getElementById("jobs-succeeded").innerText = dataObj.jobs_succeeded
