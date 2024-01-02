@@ -16,6 +16,7 @@
   'opsz' 24
 }
 </style>
+<script src="global.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -70,37 +71,14 @@ str += '<tbody>'
 
 if (dataObj != undefined) {
   dataObj.forEach(function(job) {
-    str += '<tr>'
+    str += '<tr onclick="location.href=\'/detail.html?jobid='
+        +job.job_id+'&sliceid='+job.replay_slice_id+'\';">'
     str += '<td>'+job.replay_slice_id+'</td>';
-
-    const datetime = job.start_time.split('T');
-    const yearMonthDay = datetime[0].split('-');
-    const formatDate = yearMonthDay[1] + '/' + yearMonthDay[2] + " " + datetime[1]
-
-    str += '<td>'+formatDate+'</td>'
+    str += '<td>'+formateDateTime(job.start_time)+'</td>'
     str += '<td>'+job.start_block_num+'</td>';
     str += '<td>'+job.last_block_processed+'</td>';
     str += '<td>'+job.end_block_num+'</td>';
-
-    var badgeLable = "badge-warning"
-    switch (job.status) {
-      case 'WAITING_4_WORKER':
-        badgeLable = "badge-waiting"; break;
-      case 'ERROR':
-        badgeLable = "badge-error"; break;
-      case 'HASH_MISMATCH':
-        badgeLable = "badge-warning"; break;
-      case 'COMPLETE':
-        badgeLable = "badge-allok"; break;
-      case 'STARTED':
-        badgeLable = "badge-in-progress"; break;
-      case 'LOADING_SNAPSHOT':
-        badgeLable = "badge-in-progress"; break;
-      case 'WORKING':
-        badgeLable = "badge-in-progress"; break;
-    }
-
-    str += '<td><lable class="badge '+badgeLable+'">'+job.status+'</lable></td>';
+    str += '<td><lable class="badge '+getBadgeType(job.status)+'">'+job.status+'</lable></td>';
     str += '<td>'+job.leap_version+'</td>';
     str += '</tr>'
   });

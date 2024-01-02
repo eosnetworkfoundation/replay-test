@@ -43,6 +43,18 @@ h3 {
 p {
   display: inline;
 }
+ul {
+  list-style-type: none;
+  text-align: left;
+}
+ul li {
+  padding: var(--padding);
+  font-weight: 400;
+}
+li p {
+  font-weight: 400;
+  text: var(--low-em-color);
+}
 .topbar {
   border: 1px solid var(--low-em-color);
   padding: var(--padding);
