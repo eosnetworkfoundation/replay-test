@@ -101,6 +101,7 @@ if (dataObj.hasOwnProperty('failed_jobs') && dataObj.failed_jobs != undefined) {
     str +=       '?jobid='+job.jobid+'&sliceid='+job.configid+'\';">'
     str += '<h3>Job '+job.configid+'</h3>'
     str += '<p class="subtext">'+job.status+'</p>'
+    str += '<span class="material-symbols-outlined '+getMarkType(job.status)+'">error</span>'
     str += '</div>'
   });
 } else {

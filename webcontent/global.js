@@ -27,3 +27,13 @@ function getBadgeType(status){
   }
   return badgeLable;
 }
+function getMarkType(status){
+  var markLable = "";
+  switch (status) {
+    case 'ERROR':
+      markLable = "mark-error"; break;
+    case 'HASH_MISMATCH':
+      markLable = "mark-warning"; break;
+  }
+  return markLable;
+}

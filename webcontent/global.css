@@ -144,6 +144,12 @@ li p {
 .badge-success {
     background-color: var(--allok-color);
 }
+#failed-job-list span.material-symbols-outlined.mark-warning {
+  color: var(--warning-color);
+}
+#failed-job-list span.material-symbols-outlined.mark-error {
+  color: var(--error-color);
+}
 .note {
   font-size: 1em;
   font-weight: 100;
