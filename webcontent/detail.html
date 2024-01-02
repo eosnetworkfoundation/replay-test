@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Job Detail</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="global.css">
+<style>
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24
+}
+</style>
+<script src="global.js"></script>
+</head>
+<body>
+<div class="topbar">
+  <span class="material-symbols-outlined">account_circle</span>
+</div>
+<div class="navbar">
+  <div class="row">
+    <div class="navbutton">
+      <a href="/progress.html">
+        <p class="navicon"><span class="material-symbols-outlined">clock_loader_10</span></p>
+        <br/>
+        <p class="subtext">Progress</p>
+      </a>
+    </div>
+    <div class="navbutton">
+      <a href="/grid.html">
+        <p class="navicon"><span class="material-symbols-outlined">grid_view</span></p>
+        <br/>
+        <p class="subtext">Jobs</p>
+      </a>
+    </div>
+    <div class="navbutton">
+      <a href="/control.html">
+        <p class="navicon"><span class="material-symbols-outlined">settings_slow_motion</span></p>
+        <br/>
+        <p class="subtext">Control</p>
+      </a>
+    </div>
+  </div>
+</div>
+<div class="maincontent">
+  <div class="card">
+    <h3 id="detail-job-heading">Job Id</h3>
+    <div id="jobdetail"></div>
+  </div>
+  <div class="card">
+    <h3 id="detail-config-heading">Configuration</h3>
+    <div id="configdetail"></div>
+  </div>
+</div>
+<script type="module">
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const jobId = urlParams.get('jobid');
+const sliceId = urlParams.get('sliceid');
+
+if (jobId == undefined) {
+  document.getElementById("jobdetail").innerHTML = '<div class="note"><p>Invalid or missing Job Id Passed as Param</p></div>';
+  document.getElementById("detail-job-heading").innerHTML = 'No Job Found';
+  document.getElementById("detail-config-heading").innerHTML = 'No Config Found';
+} else {
+  document.getElementById("detail-job-heading").innerHTML = "Job Id "+sliceId;
+
+  const reqHeaders = new Headers();
+  reqHeaders.append("Accept", "application/json");
+  const jobResponse = await fetch('/job?jobid='+jobId,
+    {
+      method: "GET",
+      headers: reqHeaders,
+    }
+  );
+  const jobObj = await jobResponse.json();
+  const configResponse = await fetch('/config?sliceid='+sliceId,
+    {
+      method: "GET",
+      headers: reqHeaders,
+    }
+  );
+  const configObj = await configResponse.json();
+
+  var jobDetailList = ''
+  var configDetailList = ''
+  if (jobObj != undefined) {
+    jobDetailList += '<ul class="jobdetails">'
+    jobDetailList += '<li><strong>Internal Process Id<strong>: <p>'+jobId+'</p><li>'
+    jobDetailList += '<li><strong>Start Time<strong>: <p>'+formateDateTime(jobObj.start_time)+'</p><li>'
+    jobDetailList += '<li><strong>End Time<strong>: <p>'+formateDateTime(jobObj.end_time)+'</p><li>'
+    jobDetailList += '<li><strong>Current Block<strong>: <p>'+jobObj.last_block_processed+'</p><li>'
+    jobDetailList += '<li><strong>Status<strong>: <lable class="badge '
+      +getBadgeType(jobObj.status)+'">'+jobObj.status+'</lable><li>'
+    jobDetailList += '<li><strong>Actual Integrity Hash<strong>: <p>'+jobObj.actual_integrity_hash+'</p><li>'
+    jobDetailList += '<li><strong>Expected Integrity Hash<strong>: <p>'+jobObj.expected_integrity_hash+'</p><li>'
+    jobDetailList += '</ul>'
+  }
+
+  if (configObj != undefined) {
+    configDetailList += '<ul class="configdetails">'
+    configDetailList += '<li><strong>Config Id<strong>: <p>'+configObj.replay_slice_id+'</p><li>'
+    configDetailList += '<li><strong>Start Block<strong>: <p>'+configObj.start_block_id+'</p><li>'
+    configDetailList += '<li><strong>End Block<strong>: <p>'+configObj.end_block_id+'</p><li>'
+    configDetailList += '<li><strong>Snapshot<strong>: <p>'+configObj.snapshot_path+'</p><li>'
+    configDetailList += '<li><strong>Storage Type<strong>: <p>'+configObj.storage_type+'</p><li>'
+    configDetailList += '<li><strong>Leap Version<strong>: <p>'+configObj.leap_version+'</p><li>'
+    configDetailList += '<li><strong>Expected Integrity Hash<strong>: <p>'+configObj.expected_integrity_hash+'</p><li>'
+    configDetailList += '</ul>'
+  }
+
+  document.getElementById("jobdetail").innerHTML = jobDetailList;
+  document.getElementById("configdetail").innerHTML = configDetailList;
+}
+</script>
+</body>
+</html>
