@@ -174,6 +174,11 @@ li p {
   font-weight: 600;
   font-size: 0.875em;
 }
+.table tr:hover {
+  cursor: pointer;
+  background-color: var(--action-color);
+  opacity: 0.8;
+}
 .table td {
   padding: calc(4 * var(--padding)) calc(2 * var(--padding));
   vertical-align: center;
