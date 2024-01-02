@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Chicken Dance Status Report</title>
+<title>Status Report</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,9 +47,9 @@
   </div>
 </div>
 <div class="maincontent">
-  <div class="note">
-    <p>A long long time ago in a galaxy far far away there lived a frog</p>
-  </div>
+  <!-- <div class="note">
+    <p>Message</p>
+  </div> -->
   <div class="row">
     <div class="card">
       <p class="subtext">Blocks Processed</p>
@@ -96,10 +96,12 @@ var str = ''
 
 if (dataObj.hasOwnProperty('failed_jobs') && dataObj.failed_jobs != undefined) {
   dataObj.failed_jobs.forEach(function(job) {
-    str += '<div class="card"> <ul class="failed-job">'
-    str += '<li><a href="/status?sliceid='+ job.configid + '">Job ' + job.jobid + '</a></li>';
-    str += '<li><a href="/config?sliceid='+ job.configid + '">Config ' + job.configid + '</a></li>';
-    str += '</ul></div>'
+    str += '<div class="card link" '
+    str +=       'onclick="location.href=\'/detail.html'
+    str +=       '?jobid='+job.jobid+'&sliceid='+job.configid+'\';">'
+    str += '<h3>Job '+job.configid+'</h3>'
+    str += '<p class="subtext">'+job.status+'</p>'
+    str += '</div>'
   });
 } else {
   str = '<div class="note"><p>No Failed Jobs to Report</p></div>'

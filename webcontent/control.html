@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>All Jobs</title>
+<title>Control</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,6 @@
   'opsz' 24
 }
 </style>
-<script src="global.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -48,46 +47,10 @@
   </div>
 </div>
 <div class="maincontent">
-  <div class="card">
-    <h3>All Jobs</h3>
-    <div id="joblist"></div>
+  <div class="note">
+    <p>Page Not Yet Implemented </p>
   </div>
 </div>
-<script type="module">
-const reqHeaders = new Headers();
-reqHeaders.append("Accept", "application/json");
-const response = await fetch("/status",
-  {
-    method: "GET",
-    headers: reqHeaders,
-  }
-);
-const dataObj = await response.json();
 
-var str = '<table class="table"><thead>'
-str += '<tr><th>job id</th> <th>start time</th> <th>start block</th> <th>current block</th> <th>end block</th> <th>status</th> <th>leap version</th></tr>'
-str += '</thead>'
-str += '<tbody>'
-
-if (dataObj != undefined) {
-  dataObj.forEach(function(job) {
-    str += '<tr onclick="location.href=\'/detail.html?jobid='
-        +job.job_id+'&sliceid='+job.replay_slice_id+'\';">'
-    str += '<td>'+job.replay_slice_id+'</td>';
-    str += '<td>'+formateDateTime(job.start_time)+'</td>'
-    str += '<td>'+job.start_block_num+'</td>';
-    str += '<td>'+job.last_block_processed+'</td>';
-    str += '<td>'+job.end_block_num+'</td>';
-    str += '<td><lable class="badge '+getBadgeType(job.status)+'">'+job.status+'</lable></td>';
-    str += '<td>'+job.leap_version+'</td>';
-    str += '</tr>'
-  });
-  str += '</tbody></table>'
-} else {
-  str = '<div class="note"><p>No jobs found</p></div>'
-}
-
-document.getElementById("joblist").innerHTML = str;
-</script>
 </body>
 </html>

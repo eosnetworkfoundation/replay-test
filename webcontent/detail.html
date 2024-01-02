@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Chicken Dance Status Report</title>
+<title>Job Detail</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -68,7 +68,7 @@ if (jobId == undefined) {
   document.getElementById("detail-job-heading").innerHTML = 'No Job Found';
   document.getElementById("detail-config-heading").innerHTML = 'No Config Found';
 } else {
-  document.getElementById("detail-job-heading").innerHTML = "Job Id "+jobId;
+  document.getElementById("detail-job-heading").innerHTML = "Job Id "+sliceId;
 
   const reqHeaders = new Headers();
   reqHeaders.append("Accept", "application/json");
@@ -91,7 +91,7 @@ if (jobId == undefined) {
   var configDetailList = ''
   if (jobObj != undefined) {
     jobDetailList += '<ul class="jobdetails">'
-    jobDetailList += '<li><strong>Config Id<strong>: <p>'+jobObj.replay_slice_id+'</p><li>'
+    jobDetailList += '<li><strong>Internal Process Id<strong>: <p>'+jobId+'</p><li>'
     jobDetailList += '<li><strong>Start Time<strong>: <p>'+formateDateTime(jobObj.start_time)+'</p><li>'
     jobDetailList += '<li><strong>End Time<strong>: <p>'+formateDateTime(jobObj.end_time)+'</p><li>'
     jobDetailList += '<li><strong>Current Block<strong>: <p>'+jobObj.last_block_processed+'</p><li>'
