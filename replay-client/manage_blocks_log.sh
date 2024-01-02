@@ -11,9 +11,9 @@
 
 
 NODEOS_DIR=${1:-/data/nodeos}
-START_BLOCK_NUM=$3
-END_BLOCK_NUM=$4
-SNAPSHOT_PATH=${5:-s3://chicken-dance/default/snapshots/snapshot.bin.zst}
+START_BLOCK_NUM=$2
+END_BLOCK_NUM=$3
+SNAPSHOT_PATH=${4:-s3://chicken-dance/default/snapshots/snapshot.bin.zst}
 
 # validate params
 if [ -z "$START_BLOCK_NUM" ] || [ -z "$END_BLOCK_NUM" ]; then

@@ -1,0 +1,221 @@
+:root {
+  --text-accent-color: #F29F67;
+  --text-card-color: #1F1F1F;
+  --low-em-color: #999;
+  --text-color: #000000;
+  --separator-color: #DEE2E6;
+  --card-boarder-color: #FFFFEF;
+  --main-bg-color: #F4F5F7;
+  --card-bg-color: #FFFFFF;
+  --shadow-color: #888;
+  --allok-color: #4DA761;
+  --warning-color: #E0B50F;
+  --error-color: #F95F53;
+  --action-color: #0D6EFD;
+  --text-size: 16px;
+  --margin: 32px;
+  --gutter: 16px;
+  --media-gutter: 0px;
+  --padding: 4px;
+}
+
+body {
+  background-color: var(--main-bg-color);
+  color: var(--text-color);
+  margin-right: var(--margin);
+  margin-left: var(--margin);
+  font-size: var(--text-size);
+  font-family: 'Lato', sans-serif;
+  font-weight: normal;
+}
+h1 {
+  font-size: 4em;
+}
+h2 {
+  font-size: 3em;
+  margin: 0;
+  padding: var(--padding);
+}
+h3 {
+  font-size: 1.2em;
+  margin: 0;
+}
+p {
+  display: inline;
+}
+ul {
+  list-style-type: none;
+  text-align: left;
+}
+ul li {
+  padding: var(--padding);
+  font-weight: 400;
+}
+li p {
+  font-weight: 400;
+  text: var(--low-em-color);
+}
+.topbar {
+  border: 1px solid var(--low-em-color);
+  padding: var(--padding);
+  text-align: right;
+}
+.maincontent {
+  border: 1px solid var(--low-em-color);
+  padding-left: var(--media-gutter);
+}
+.navbar {
+  border: 1px solid var(--low-em-color);
+  padding-left: var(--media-gutter);
+}
+.row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.column {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+  flex: 1;
+}
+.navbutton {
+  border: 1px solid var(--card-boarder-color);
+  background-color: var(--card-bg-color);
+  margin-top: var(--gutter);
+  margin-bottom: var(--gutter);
+  margin-left: var(--gutter);
+  margin-right: var(--media-gutter);
+  padding: var(--padding);
+  text-align: center;
+  border-radius: 5px;
+  filter: drop-shadow(var(--shadow-color) 0.25rem 0.25rem 0.25rem);
+}
+.navbutton a {
+  text-decoration: none;
+  color: var(--text-color);
+}
+.navicon .material-symbols-outlined {
+  font-size: 3em;
+}
+.maincontent > h2 {
+  margin-top: var(--gutter);
+  margin-bottom: var(--gutter);
+  margin-left: var(--gutter);
+  margin-right: var(--media-gutter);
+}
+.card {
+  border: 1px solid var(--card-boarder-color);
+  background-color: var(--card-bg-color);
+  margin-top: var(--gutter);
+  margin-bottom: var(--gutter);
+  margin-left: var(--gutter);
+  margin-right: var(--media-gutter);
+  padding: var(--padding);
+  border-radius: 14px;
+  text-align: center;
+}
+.card > h3 {
+  text-align: left;
+  padding: calc(2 * var(--padding))
+}
+.subtext {
+  font-size: 0.75em;
+  color: var(--low-em-color);
+}
+.badge {
+  font-size: 0.75em;
+  border-radius: 5px;
+  padding: calc(1.75 * var(--padding));
+}
+.badge-waiting {
+  background-color: var(--separator-color);
+}
+.badge-warning {
+  background-color: var(--warning-color);
+}
+.badge-error {
+  background-color: var(--error-color);
+}
+.badge-in-progress {
+    background-color: var(--action-color);
+}
+.badge-success {
+    background-color: var(--allok-color);
+}
+#failed-job-list span.material-symbols-outlined.mark-warning {
+  color: var(--warning-color);
+}
+#failed-job-list span.material-symbols-outlined.mark-error {
+  color: var(--error-color);
+}
+.note {
+  font-size: 1em;
+  font-weight: 100;
+  color: var(--text-color);
+  padding: var(--padding);
+  margin-right: var(--gutter);
+  margin-left: var(--gutter);
+}
+.table {
+  width: 100%
+  color: var(--text-color);
+  vertical-align: top;
+  margin-right: var(--gutter);
+  margin-left: var(--gutter);
+}
+.table > thead {
+  vertical-align: bottom;
+}
+.table th {
+  vertical-align: center;
+  line-height: 1;
+  white-space: nowrap;
+  padding: var(--padding) var(--padding)
+}
+.table thead th {
+  border-top: 0;
+  border-bottom: 2px solid var(--separator-color);
+  font-weight: 600;
+  font-size: 0.875em;
+}
+.maincontent div:hover.link {
+  cursor: pointer;
+  background-color: var(--action-color);
+  opacity: 0.8;
+}
+.table tr:hover {
+  cursor: pointer;
+  background-color: var(--action-color);
+  opacity: 0.8;
+}
+.table td {
+  padding: calc(4 * var(--padding)) calc(2 * var(--padding));
+  vertical-align: center;
+  line-height: 1;
+  white-space: nowrap;
+  border-top: 0;
+  border-bottom: 1px solid var(--separator-color);
+  font-weight: 400;
+  font-size: 0.875em;
+}
+.table > tbody > tr:last-child > td { border-bottom: 0; }
+
+@media screen and (min-width: 800px) {
+  :root {
+    --media-gutter: 64px;
+  }
+}
+@media screen and (max-width: 500px) {
+  :root {
+    --media-gutter: 0;
+    --gutter: 8px;
+    --padding: 1px;
+  }
+}
+
+/*
+https://demo.bootstrapdash.com/star-admin2-pro/template/demo/vertical-default-light/index.html
+https://demo.bootstrapdash.com/star-admin2-pro/template/demo/vertical-default-dark/index.html
+*/
