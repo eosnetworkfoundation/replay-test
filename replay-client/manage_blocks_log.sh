@@ -52,7 +52,9 @@ let "BLOCK_START=UPPER_BOUND_START+1"
 S3_BLOCKS_UPPER=blocks-${BLOCK_START}-${UPPER_BOUND}.log.zst
 
 # copy down files
-for S3_BLOCKS in $S3_BLOCKS_LOWER $S3_BLOCKS_UPPER
+# leap-util merge-blocks running out of space, just copy one blocks log for now
+#for S3_BLOCKS in $S3_BLOCKS_LOWER $S3_BLOCKS_UPPER
+for S3_BLOCKS in $S3_BLOCKS_LOWER
 do
   aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_PATH"/"$S3_BLOCKS" > /dev/null 2>&1 || NOT_EXIST=true
 
