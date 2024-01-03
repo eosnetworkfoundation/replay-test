@@ -46,11 +46,15 @@ fi
 # construct two files because the start/end might cross a block log stride
 LOWER_BOUND_END=$(echo "${LOWER_BOUND}+${STRIDE}" | bc)
 UPPER_BOUND_START=$(echo "${UPPER_BOUND}-${STRIDE}" | bc)
-S3_BLOCKS_LOWER=blocks-${LOWER_BOUND}-${LOWER_BOUND_END}.log.zst
-S3_BLOCKS_UPPER=blocks-${UPPER_BOUND_START}-${UPPER_BOUND}.log.zst
+let "BLOCK_START=LOWER_BOUND+1"
+S3_BLOCKS_LOWER=blocks-${BLOCK_START}-${LOWER_BOUND_END}.log.zst
+let "BLOCK_START=UPPER_BOUND_START+1"
+S3_BLOCKS_UPPER=blocks-${BLOCK_START}-${UPPER_BOUND}.log.zst
 
 # copy down files
-for S3_BLOCKS in $S3_BLOCKS_LOWER $S3_BLOCKS_UPPER
+# leap-util merge-blocks running out of space, just copy one blocks log for now
+#for S3_BLOCKS in $S3_BLOCKS_LOWER $S3_BLOCKS_UPPER
+for S3_BLOCKS in $S3_BLOCKS_LOWER
 do
   aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_PATH"/"$S3_BLOCKS" > /dev/null 2>&1 || NOT_EXIST=true
 
@@ -58,9 +62,9 @@ do
     echo "${S3_DIR}/${S3_FILE} does not exist skipping blocks log restore step"
   else
     # skip if local file already exists
-    if [ ! -s "$NODEOS_DIR"/data/blocks/"$S3_FILE" ]; then
-      aws s3 cp "${S3_DIR}"/"$S3_FILE" "$NODEOS_DIR"/data/blocks/
-      aws s3 cp "${S3_DIR}"/"${S3_FILE%%.*}.index.zst" "$NODEOS_DIR"/data/blocks/
+    if [ ! -s "$NODEOS_DIR"/data/blocks"${S3_FILE}"/"${S3_BLOCKS}" ]; then
+      aws s3 cp "${S3_DIR}"/"$S3_FILE""$S3_BLOCKS" "$NODEOS_DIR"/data/blocks/
+      aws s3 cp "${S3_DIR}"/"$S3_FILE""${S3_BLOCKS%%.*}.index.zst" "$NODEOS_DIR"/data/blocks/
       for f in "$NODEOS_DIR"/data/blocks/blocks-*.zst
       do
         zstd -d $f
@@ -80,7 +84,7 @@ if [ $CNT -gt 1 ]; then
   # move blocks out of the way before merge
   mv "$NODEOS_DIR"/data/blocks/blocks-*.log "$NODEOS_DIR"/source-blocks/
   mv "$NODEOS_DIR"/data/blocks/blocks-*.index "$NODEOS_DIR"/source-blocks/
-  leap-util block-log blocks-merge \
+  leap-util block-log merge-blocks \
       --blocks-dir "$NODEOS_DIR"/source-blocks/ \
       --output-dir "$NODEOS_DIR"/data/blocks/ > /dev/null 2>&1 || FAILED_MERGE=true
   if [ $FAILED_MERGE ]; then
@@ -102,10 +106,10 @@ if [ $FAILED_SMOKE_TEST ]; then
   echo "leap-util generating block.index"
   leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ make-index >> "$NODEOS_DIR"/log/leap-util.log 2>&1
   unset FAILED_SMOKE_TEST
-fi
-# retest
-leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ smoke-test > /dev/null 2>&1 || FAILED_SMOKE_TEST=true
-if [ $FAILED_SMOKE_TEST ]; then
-  echo "Smoke test for Blocks log ${NODEOS_DIR}/data/blocks/ failed exiting"
-  exit 127
+  # retest
+  leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ smoke-test > /dev/null 2>&1 || FAILED_SMOKE_TEST=true
+  if [ $FAILED_SMOKE_TEST ]; then
+    echo "Smoke test for Blocks log ${NODEOS_DIR}/data/blocks/ failed exiting"
+    exit 127
+  fi
 fi
