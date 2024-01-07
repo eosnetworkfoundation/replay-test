@@ -159,7 +159,7 @@ echo "Step 4 of 7: Start nodeos, load snapshot, and sync till ${END_BLOCK}"
 
 ## update status when snapshot is complete: updates last block processed ##
 ## Background process grep logs on fixed interval secs ##
-${REPLAY_CLIENT_DIR}/background_status_update.sh $ORCH_IP $ORCH_PORT $JOBID "$NODEOS_DIR" &
+${REPLAY_CLIENT_DIR}/background_status_update.sh $ORCH_IP $ORCH_PORT $JOBID "$NODEOS_DIR" "$REPLAY_CLIENT_DIR" &
 BACKGROUND_STATUS_PID=$!
 
 sleep 5
@@ -186,7 +186,7 @@ else
 fi
 
 kill $BACKGROUND_STATUS_PID
-sleep 30
+sleep 5
 
 #################
 # 5) get replay details from logs
@@ -199,12 +199,14 @@ START_BLOCK_ACTUAL_INTEGRITY_HASH=$("${REPLAY_CLIENT_DIR:?}"/get_integrity_hash_
 # 6) restart nodeos read-only mode to get final integrity hash
 #################
 echo "Step 6 of 7: restart nodeos read-only mode to get final integrity hash"
+# remove blocks logs to prevent additional replay of logs past our desired $END_BLOCK
+rm -f "${NODEOS_DIR}"/data/blocks/blocks.log "${NODEOS_DIR}"/data/blocks/blocks.index
 nodeos \
      --data-dir "${NODEOS_DIR}"/data/ \
      --config "${CONFIG_DIR}"/readonly-config.ini \
      &> "${NODEOS_DIR}"/log/nodeos-readonly.log &
 BACKGROUND_NODEOS_PID=$!
-sleep 30
+sleep 20
 
 END_BLOCK_ACTUAL_INTEGRITY_HASH=$(curl -s http://127.0.0.1:8888/v1/producer/get_integrity_hash | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "integrity_hash")
 # write hash to file, file not needed, backup for safety

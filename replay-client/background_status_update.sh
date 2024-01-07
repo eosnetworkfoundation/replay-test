@@ -7,8 +7,8 @@ ORCH_IP=$1
 ORCH_PORT=${2}
 JOBID=$3
 NODEOS_DIR=${4:-/data/nodeos}
+REPLAY_CLIENT_DIR=${5:-/home/enf-replay/replay-test/replay-client}
 STATUS="LOADING_SNAPSHOT"
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 loop_count=0
 # clean up old integrity hash if it exists
@@ -23,19 +23,19 @@ do
   # check for snapshot load complete
   if [ "$STATUS" == "LOADING_SNAPSHOT" ]; then
     # look for starting integrity hashes
-    HASH=$("${SCRIPT_DIR}"/get_integrity_hash_from_log.sh "started" "$NODEOS_DIR")
+    HASH=$("${REPLAY_CLIENT_DIR}"/get_integrity_hash_from_log.sh "started" "$NODEOS_DIR")
     HASH_SIZE=$(echo $HASH | wc -c)
     # update status
     if [ $HASH_SIZE -gt 63 ]; then
       STATUS="WORKING"
-      python3 "${SCRIPT_DIR}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
+      python3 "${REPLAY_CLIENT_DIR}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
          --operation update-status --status "${STATUS}" --job-id ${JOBID}
       # write hash to file
       echo $HASH > "$NODEOS_DIR"/log/start_integrity_hash.txt
     fi
   else
-    BLOCK_NUM=$("${SCRIPT_DIR}"/head_block_num_from_log.sh "$NODEOS_DIR")
-    python3 "${SCRIPT_DIR}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
+    BLOCK_NUM=$("${REPLAY_CLIENT_DIR}"/head_block_num_from_log.sh "$NODEOS_DIR")
+    python3 "${REPLAY_CLIENT_DIR}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
         --operation update-progress --block-processed "$BLOCK_NUM" --job-id ${JOBID}
   fi
 done
