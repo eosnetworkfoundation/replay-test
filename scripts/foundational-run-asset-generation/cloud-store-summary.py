@@ -55,12 +55,12 @@ if __name__ == '__main__':
         end_block_range = file_no_ext.split('-')[2]
 
         has_snap = False
-        if "has_snap" in snapshot_dict[key] \
+        if key in snapshot_dict and "has_snap" in snapshot_dict[key] \
             and snapshot_dict[key]["has_snap"]:
             has_snap = True
 
         snap_count = 0
-        if "snap_count" in snapshot_dict[key] \
+        if key in snapshot_dict and "snap_count" in snapshot_dict[key] \
             and snapshot_dict[key]["snap_count"] > 0:
             snap_count = snapshot_dict[key]["snap_count"]
 
