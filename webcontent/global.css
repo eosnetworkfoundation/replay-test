@@ -56,16 +56,14 @@ li p {
   text: var(--low-em-color);
 }
 .topbar {
-  border: 1px solid var(--low-em-color);
   padding: var(--padding);
   text-align: right;
 }
 .maincontent {
-  border: 1px solid var(--low-em-color);
   padding-left: var(--media-gutter);
 }
 .navbar {
-  border: 1px solid var(--low-em-color);
+  border-bottom: 1px solid var(--low-em-color);
   padding-left: var(--media-gutter);
 }
 .row {
@@ -216,6 +214,7 @@ li p {
 }
 
 /*
+loosely based on designs from
 https://demo.bootstrapdash.com/star-admin2-pro/template/demo/vertical-default-light/index.html
 https://demo.bootstrapdash.com/star-admin2-pro/template/demo/vertical-default-dark/index.html
 */
