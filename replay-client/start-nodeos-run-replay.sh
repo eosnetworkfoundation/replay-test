@@ -9,7 +9,6 @@
 # 5) replay transactions to specified block height from blocks.log or networked peers and terminates
 # 6) restart nodeos read-only mode to get final integrity hash
 # 7) http POST completed status for configured block range
-# 8) retain blocks logs copy over to cloud storage
 # Communicates to orchestration service via HTTP
 # Dependency on aws client, python3, curl, and large volume under /data
 #
@@ -19,7 +18,7 @@
 #
 # Author: Eric Passmore
 # Org: ENF EOS Network Foundation
-# Date: Nov 21th 2023
+# Date: Dec 27th 2023
 
 ORCH_IP="${1:-127.0.0.1}"
 ORCH_PORT="${2:-4000}"
@@ -46,9 +45,9 @@ function trap_exit() {
   fi
   [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
   if [ -n "${JOBID}" ]; then
-    python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
+    python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation update-status --status "ERROR" --job-id ${JOBID}
   fi
-  echo "Caught signal exiting"
+  echo "Caught signal or detected error exiting"
   exit 127
 }
 
@@ -59,7 +58,7 @@ trap trap_exit TERM
 ##################
 # 1) performs file setup: create dirs, get snapshot to load
 #################
-echo "Step 1 of 8 performs setup: cleanup previous replay, create dirs, get snapshot to load"
+echo "Step 1 of 7 performs setup: cleanup previous replay, create dirs, get snapshot to load"
 ## who we are ##
 USER=enf-replay
 TUID=$(id -ur)
@@ -67,7 +66,7 @@ TUID=$(id -ur)
 ## must not be root to run ##
 if [ "$TUID" -eq 0 ]; then
   echo "Trying to run as root user exiting"
-  exit
+  trap_exit
 fi
 
 ## cleanup previous runs ##
@@ -77,7 +76,7 @@ fi
 volsize=$(df -h /data | awk 'NR==2 {print $4}' | sed 's/G//' | cut -d. -f1)
 if [ ${volsize:-0} -lt 40 ]; then
   echo "/data volume does not exist or does not have 40Gb free space"
-  exit 127
+  trap_exit
 fi
 
 ## directory setup ##
@@ -86,14 +85,13 @@ fi
 #################
 # 2) http GET job details from orchestration service, incls. block range
 #################
-echo "Step 2 of 8: Getting job details from orchestration service"
+echo "Step 2 of 7: Getting job details from orchestration service"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} --operation pop > /tmp/job.conf.json
 
-STATUS=$(cat /tmp/job.conf.json | python3 "${REPLAY_CLIENT_DIR:?}"/parse_json.py "status_code")
-if [ $STATUS -ne 200 ]; then
+# if json result is empty failed to aquire job
+if [[ ! -e "/tmp/job.conf.json" || ! -s "/tmp/job.conf.json" ]]; then
   echo "Failed to aquire job"
-  [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
-  exit 127
+  trap_exit
 fi
 echo "Received job details processing..."
 
@@ -112,7 +110,7 @@ SOURCE_TYPE=$(dirname "$SNAPSHOT_PATH"  | sed 's#s3://##' | cut -d'/' -f2)
 #################
 # 3) local non-priv install of nodeos
 #################
-echo "Step 3 of 8: local non-priv install of nodeos"
+echo "Step 3 of 7: local non-priv install of nodeos"
 "${REPLAY_CLIENT_DIR:?}"/install-nodeos.sh $LEAP_VERSION
 PATH=${PATH}:${HOME}/nodeos/usr/bin
 export PATH
@@ -126,22 +124,27 @@ if [ $STORAGE_TYPE = "s3" ]; then
     echo "Warning: No snapshot provided in config or start block is zero (0)"
   fi
 else
-  python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
-        --operation update-status --status "ERROR" --job-id ${JOBID}
   echo "Unknown snapshot type ${STORAGE_TYPE}"
-  [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
-  exit 127
+  trap_exit
 fi
 
 # restore blocks.log from cloud storage
 echo "Restoring Blocks.log from Cloud Storage"
-"${REPLAY_CLIENT_DIR:?}"/manage_blocks_log.sh "$NODEOS_DIR" "restore" $START_BLOCK $END_BLOCK "${SNAPSHOT_PATH}"
-
+"${REPLAY_CLIENT_DIR:?}"/manage_blocks_log.sh "$NODEOS_DIR" $START_BLOCK $END_BLOCK "${SNAPSHOT_PATH}"
+if [ $? -ne 0 ]; then
+  echo "Failed to restore blocks.log"
+  trap_exit
+fi
 
 ## when start block 0 no snapshot to process ##
 if [ $START_BLOCK -gt 0 ] && [ -f "${NODEOS_DIR}"/snapshot/snapshot.bin.zst ]; then
   echo "Unzip snapshot"
   zstd --decompress "${NODEOS_DIR}"/snapshot/snapshot.bin.zst
+  # sometimes compression format is bad error out on failure
+  if [ $? -ne 0 ]; then
+    echo "Failed to unzip snapshot"
+    trap_exit
+  fi
 fi
 
 ## update status that snapshot is loading ##
@@ -152,11 +155,11 @@ python3 ${REPLAY_CLIENT_DIR}/job_operations.py --host ${ORCH_IP} --port ${ORCH_P
 #################
 # 4) starts nodeos loads the snapshot, syncs to end block, and terminates
 #################
-echo "Step 4 of 8: Start nodeos, load snapshot, and sync till ${END_BLOCK}"
+echo "Step 4 of 7: Start nodeos, load snapshot, and sync till ${END_BLOCK}"
 
 ## update status when snapshot is complete: updates last block processed ##
 ## Background process grep logs on fixed interval secs ##
-${REPLAY_CLIENT_DIR}/background_status_update.sh $ORCH_IP $ORCH_PORT $JOBID "$NODEOS_DIR" &
+${REPLAY_CLIENT_DIR}/background_status_update.sh $ORCH_IP $ORCH_PORT $JOBID "$NODEOS_DIR" "$REPLAY_CLIENT_DIR" &
 BACKGROUND_STATUS_PID=$!
 
 sleep 5
@@ -183,25 +186,27 @@ else
 fi
 
 kill $BACKGROUND_STATUS_PID
-sleep 30
+sleep 5
 
 #################
 # 5) get replay details from logs
 #################
-echo "Step 5 of 8: Reached End Block ${END_BLOCK}, getting replay details from logs"
+echo "Step 5 of 7: Reached End Block ${END_BLOCK}, getting replay details from logs"
 END_TIME=$(date '+%Y-%m-%dT%H:%M:%S')
 START_BLOCK_ACTUAL_INTEGRITY_HASH=$("${REPLAY_CLIENT_DIR:?}"/get_integrity_hash_from_log.sh "started" "$NODEOS_DIR")
 
 #################
 # 6) restart nodeos read-only mode to get final integrity hash
 #################
-echo "Step 6 of 8: restart nodeos read-only mode to get final integrity hash"
+echo "Step 6 of 7: restart nodeos read-only mode to get final integrity hash"
+# remove blocks logs to prevent additional replay of logs past our desired $END_BLOCK
+rm -f "${NODEOS_DIR}"/data/blocks/blocks.log "${NODEOS_DIR}"/data/blocks/blocks.index
 nodeos \
      --data-dir "${NODEOS_DIR}"/data/ \
      --config "${CONFIG_DIR}"/readonly-config.ini \
      &> "${NODEOS_DIR}"/log/nodeos-readonly.log &
 BACKGROUND_NODEOS_PID=$!
-sleep 30
+sleep 20
 
 END_BLOCK_ACTUAL_INTEGRITY_HASH=$(curl -s http://127.0.0.1:8888/v1/producer/get_integrity_hash | python3 ${REPLAY_CLIENT_DIR}/parse_json.py "integrity_hash")
 # write hash to file, file not needed, backup for safety
@@ -226,18 +231,17 @@ kill $BACKGROUND_NODEOS_PID
 #################
 # 7) http POST completed status for configured block range
 #################
-echo "Step 7 of 8: Sending COMPLETE status"
+echo "Step 7 of 7: Sending COMPLETE status"
 python3 "${REPLAY_CLIENT_DIR:?}"/job_operations.py --host ${ORCH_IP} --port ${ORCH_PORT} \
     --operation complete --job-id ${JOBID} \
     --block-processed ${END_BLOCK} \
     --end-time "${END_TIME}" \
     --integrity-hash "${END_BLOCK_ACTUAL_INTEGRITY_HASH}"
 
-#################
-# 8) retain block log copy over to cloud storage
-# retain - copies from local host to cloud storage
-#################
-echo "Step 8 of 8: copying blocks.log to cloud storage"
-"${REPLAY_CLIENT_DIR:?}"/manage_blocks_log.sh "$NODEOS_DIR" "retain" $START_BLOCK $END_BLOCK "${SNAPSHOT_PATH}"
-
 [ -f "$LOCK_FILE" ] && rm "$LOCK_FILE"
+
+# preserve logs from previous run
+mkdir /data/previous-${START_BLOCK}
+cp /data/log/* /data/previous-${START_BLOCK}
+cp ~/last-replay.log /data/previous-${START_BLOCK}
+mv /tmp/job.conf.json /data/previous-${START_BLOCK}

@@ -4,7 +4,7 @@ USER=ubuntu
 
 ## packages ##
 apt-get update >> /dev/null
-apt-get install -y git unzip jq curl python3 python3-pip
+apt-get install -y git unzip jq curl nginx python3 python3-pip
 
 ## aws cli ##
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
@@ -16,8 +16,13 @@ rm -rf /tmp/aws /tmp/awscliv2.zip
 sudo -i -u "${USER}" git clone https://github.com/eosnetworkfoundation/replay-test
 sudo -i -u "${USER}" pip install datetime argparse werkzeug bs4 numpy
 
-## setup log rotate ##
-cp /home/"${USER}"/replay-test/scripts/orchestration-logrotate.conf /etc/logrotate.d/replay-orchestration
+## config nginx proxy ##
+cp /home/"${USER}"/replay-test/config/nginx-replay-test.conf /etc/nginx/sites-available/
+rm /etc/nginx/sites-enabled/default
+ln -s /etc/nginx/sites-available/nginx-replay-test.conf /etc/nginx/sites-enabled/default
+# copy in html, css, js, images
+cp -r /home/"${USER}"/replay-test/webcontent/* /var/www/html/
+systemctl reload nginx
 
 ## startup service in background ##
 sudo -i -u "${USER}" python3 /home/"${USER}"/replay-test/orchestration-service/web_service.py \

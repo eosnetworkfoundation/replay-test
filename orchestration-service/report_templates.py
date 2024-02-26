@@ -3,25 +3,6 @@ class ReportTemplate:
     """Static method for reports. Headers, footers, and item listings"""
 
     @staticmethod
-    def home_html_report():
-        """HTML HOME Page"""
-        content = ReportTemplate.status_html_header()
-        content += """
-        <!DOCTYPE html>
-<html>
-<body>
-<title>Chicken Dance Index Page</title>
-<a href="/status">Status</a>: shows current jobs and status of each job</br>
-<a href="/config?sliceid=1">Config</a>: must specify a sliceid, detailed config supporting job</br>
-<a href="/summary">Result Summary</a>: progress or final summary</br>
-Job: get and set job configuration. Requires jobid param. Not available on this page.
-</body>
-</html>
-        """
-        content += ReportTemplate.status_html_footer()
-        return content
-
-    @staticmethod
     def status_html_report(results):
         """HTML Report"""
         # Converting to simple HTML representation (adjust as needed)

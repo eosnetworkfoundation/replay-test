@@ -4,7 +4,6 @@
 # Params
 #
 # NODEOS_DIR - local host top level directory
-# OPERATION - retain: copy to cloud OR restore: copy from cloud
 # START_BLOCK_NUM - starting block to lable blocks log
 # END_BLOCK_NUM - ending block to lable blocks log
 # SNAPSHOT_PATH - used to figure out cloud directory and bucket
@@ -12,19 +11,16 @@
 
 
 NODEOS_DIR=${1:-/data/nodeos}
-OPERATION=$2
-START_BLOCK_NUM=$3
-END_BLOCK_NUM=$4
-SNAPSHOT_PATH=${5:-s3://chicken-dance/default/snapshots/snapshot.bin.zst}
+START_BLOCK_NUM=$2
+END_BLOCK_NUM=$3
+SNAPSHOT_PATH=${4:-s3://chicken-dance/default/snapshots/snapshot.bin.zst}
 
 # validate params
-if [ -z "$OPERATION" ] || [ -z "$START_BLOCK_NUM" ] || [ -z "$END_BLOCK_NUM" ]; then
+if [ -z "$START_BLOCK_NUM" ] || [ -z "$END_BLOCK_NUM" ]; then
   echo "Must provider operation, start block num and end block num to manage_block_log.sh"
   exit 127
 fi
 
-# lowercase operation
-OPERATION=$(echo "$OPERATION" | tr '[:upper:]' '[:lower:]')
 
 # Figure out S3 Blocks log dir from provided snapshot path
 # Remove the last directory using dirname
@@ -39,39 +35,81 @@ S3_PATH=$(echo "${S3_DIR}" | sed 's#s3://##' | cut -d'/' -f2-)
 if [ ${START_BLOCK_NUM} -lt 1 ]; then
   START_BLOCK_NUM=1
 fi
-S3_FILE=blocks-${START_BLOCK_NUM}-${END_BLOCK_NUM}.log
+# find the bound for blocks
+# blocks logs increments of 2,000,000
+STRIDE=2000000
+LOWER_BOUND=$( echo "${START_BLOCK_NUM}/${STRIDE}*${STRIDE}" | bc)
+UPPER_BOUND=$( echo "${END_BLOCK_NUM}/${STRIDE}*${STRIDE}" | bc)
+if [ ${END_BLOCK_NUM} -gt ${UPPER_BOUND} ]; then
+  UPPER_BOUND=$( echo "${UPPER_BOUND}+${STRIDE}" | bc)
+fi
+# construct two files because the start/end might cross a block log stride
+LOWER_BOUND_END=$(echo "${LOWER_BOUND}+${STRIDE}" | bc)
+UPPER_BOUND_START=$(echo "${UPPER_BOUND}-${STRIDE}" | bc)
+let "BLOCK_START=LOWER_BOUND+1"
+S3_BLOCKS_LOWER=blocks-${BLOCK_START}-${LOWER_BOUND_END}.log.zst
+let "BLOCK_START=UPPER_BOUND_START+1"
+S3_BLOCKS_UPPER=blocks-${BLOCK_START}-${UPPER_BOUND}.log.zst
 
-# does S3 file exist
-aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_PATH"/"$S3_FILE" > /dev/null 2>&1 || NOT_EXIST=true
+# copy down files
+# leap-util merge-blocks running out of space, just copy one blocks log for now
+#for S3_BLOCKS in $S3_BLOCKS_LOWER $S3_BLOCKS_UPPER
+for S3_BLOCKS in $S3_BLOCKS_LOWER
+do
+  aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_PATH"/"$S3_BLOCKS" > /dev/null 2>&1 || NOT_EXIST=true
 
-if [ "$OPERATION" == "retain" ]; then
-  if [ $NOT_EXIST ]; then
-    aws s3 cp "$NODEOS_DIR"/data/blocks/blocks.log "${S3_DIR}"/"$S3_FILE"
-    # TODO: add uncompress step issue #31
-  else
-    echo "blocks.log file already exists, skipping backup to cloud storage"
-  fi
-elif [ "$OPERATION" == "restore" ]; then
   if [ $NOT_EXIST ]; then
     echo "${S3_DIR}/${S3_FILE} does not exist skipping blocks log restore step"
   else
-    # TODO: add compression step issue #31
-    aws s3 cp "${S3_DIR}"/"$S3_FILE" "$NODEOS_DIR"/data/blocks/blocks.log
-    leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ smoke-test > /dev/null 2>&1 || FAILED_SMOKE_TEST=true
-    # try an obvious repair
-    if [ $FAILED_SMOKE_TEST ]; then
-      echo "leap-util generating block.index"
-      leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ make-index >> "$NODEOS_DIR"/log/leap-util.log 2>&1
-      unset FAILED_SMOKE_TEST
-    fi
-    # retest
-    leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ smoke-test > /dev/null 2>&1 || FAILED_SMOKE_TEST=true
-    if [ $FAILED_SMOKE_TEST ]; then
-      echo "Smoke test for Blocks log ${NODEOS_DIR}/data/blocks/ failed exiting"
-      exit 127
+    # skip if local file already exists
+    if [ ! -s "$NODEOS_DIR"/data/blocks"${S3_FILE}"/"${S3_BLOCKS}" ]; then
+      aws s3 cp "${S3_DIR}"/"$S3_FILE""$S3_BLOCKS" "$NODEOS_DIR"/data/blocks/
+      aws s3 cp "${S3_DIR}"/"$S3_FILE""${S3_BLOCKS%%.*}.index.zst" "$NODEOS_DIR"/data/blocks/
+      for f in "$NODEOS_DIR"/data/blocks/blocks-*.zst
+      do
+        zstd -d $f
+        if [ $? -eq 0 ]; then
+          rm $f
+        fi
+      done
     fi
   fi
+done
+
+# now we have our files
+CNT=$(ls -1 "$NODEOS_DIR"/data/blocks/blocks-*.log | wc -l)
+# several blocks logs to merge
+if [ $CNT -gt 1 ]; then
+  [ ! -d "$NODEOS_DIR"/source-blocks/ ] && mkdir "$NODEOS_DIR"/source-blocks/
+  # move blocks out of the way before merge
+  mv "$NODEOS_DIR"/data/blocks/blocks-*.log "$NODEOS_DIR"/source-blocks/
+  mv "$NODEOS_DIR"/data/blocks/blocks-*.index "$NODEOS_DIR"/source-blocks/
+  leap-util block-log merge-blocks \
+      --blocks-dir "$NODEOS_DIR"/source-blocks/ \
+      --output-dir "$NODEOS_DIR"/data/blocks/ > /dev/null 2>&1 || FAILED_MERGE=true
+  if [ $FAILED_MERGE ]; then
+    echo "Failed to merge blocks logs from ${NODEOS_DIR}/source-blocks/ into ${NODEOS_DIR}/data/blocks/"
+    exit 127
+  fi
+# just one blocks log rename
 else
-  echo "unknow operation ${OPERATION} provided to manage_block_log.sh"
-  exit 127
+  for f in "$NODEOS_DIR"/data/blocks/blocks-*.log
+  do
+    mv $f "$NODEOS_DIR"/data/blocks/blocks.log
+    mv "${f%%.*}.index" "$NODEOS_DIR"/data/blocks/blocks.index
+  done
+fi
+
+leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ smoke-test > /dev/null 2>&1 || FAILED_SMOKE_TEST=true
+# try an obvious repair
+if [ $FAILED_SMOKE_TEST ]; then
+  echo "leap-util generating block.index"
+  leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ make-index >> "$NODEOS_DIR"/log/leap-util.log 2>&1
+  unset FAILED_SMOKE_TEST
+  # retest
+  leap-util block-log --blocks-dir "$NODEOS_DIR"/data/blocks/ smoke-test > /dev/null 2>&1 || FAILED_SMOKE_TEST=true
+  if [ $FAILED_SMOKE_TEST ]; then
+    echo "Smoke test for Blocks log ${NODEOS_DIR}/data/blocks/ failed exiting"
+    exit 127
+  fi
 fi
