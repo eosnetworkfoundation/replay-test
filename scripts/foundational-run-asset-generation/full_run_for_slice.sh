@@ -3,6 +3,7 @@
 # install python lib
 pip install tomli numpy
 cd /home/enf-replay/replay-test || exit
+PYTHONPATH=/home/enf-replay/replay-test/scripts/manifest
 python3 /home/enf-replay/replay-test/scripts/foundational-run-asset-generation/generate_full_run_data.py \
   --file /home/enf-replay/replay-test/meta-data/optimized_block_spacing.tsv > /home/enf-replay/optimized-blocks.csv
 
@@ -41,8 +42,8 @@ do_snapshot() {
 #SNAP=snapshot-2020-05-10-16-eos-v6-0119970792.bin.zst; START_NUM=119999999; END_NUM= 130000000
 #SNAP=snapshot-2020-06-24-16-eos-v6-0127744602.bin.zst; START_NUM=127999999; END_NUM=140000000
 #SNAP=snapshot-2020-08-19-16-eos-v6-0137418534.bin.zst; START_NUM=137999999; END_NUM=152000000
-SNAP=snapshot-2020-11-11-16-eos-v6-0151927809.bin.zst; START_NUM=151999999; END_NUM=164000000
-# SNAP=snapshot-2021-01-17-16-eos-v6-0163499038.bin.zst ; START_NUM=163999999; END_NUM=194000000
+#SNAP=snapshot-2020-11-11-16-eos-v6-0151927809.bin.zst; START_NUM=151999999; END_NUM=164000000
+SNAP=snapshot-2021-01-17-16-eos-v6-0163499038.bin.zst ; START_NUM=163999999; END_NUM=194000000
 # SNAP=snapshot-2021-07-11-16-eos-v6-0193719865.bin.zst ; START_NUM=193999999; END_NUM=272000000
 # SNAP=snapshot-2022-10-05-16-eos-v6-0271620354.bin.zst ; START_NUM=271999999; END_NUM=344000000
 
