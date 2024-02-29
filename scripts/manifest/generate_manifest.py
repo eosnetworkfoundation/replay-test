@@ -128,7 +128,7 @@ class BuildSnapshotsFromS3: # pylint: disable=too-few-public-methods
 
     def get_urls(self):
         """builds a list of URLs from snapshots in S3 Bucket"""
-        logging.debug(f"s3 path {S3Interface.build_s3_loc(self.bucket,self.snap_dir+'/snapshots/')}")
+        logging.debug("s3 path %s", S3Interface.build_s3_loc(self.bucket,self.snap_dir+'/snapshots/'))
         snaps_list  = S3Interface.list(self.bucket, self.snap_dir +'/snapshots/', True)
         url_list = []
         # add one fake snapshot for genesis
