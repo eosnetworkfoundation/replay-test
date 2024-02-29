@@ -21,7 +21,7 @@ Select `LowEndOrchestrator` and use the default template.
 ![OrchTemplaceSelect](docs/images/CDOrchTemplateSelect.png)
 
 ## Updating Orchestrator Job Configuration
-By default the setup will spin up a webservice with [Production Run from Nov 2023](meta-data/full-production-run-20231130.json). To change the job configuration you need to create your own JSON configuration, and restart the service to use the new JSON. **Note** need to use `nohup` on python webservice to keep the process running after ssh-shell exit.
+By default the setup will spin up a webservice with [Production Run from Jan 2024](meta-data/full-production-run-20240101.json). To change the job configuration you need to create your own JSON configuration, and restart the service to use the new JSON. **Note** need to use `nohup` on python webservice to keep the process running after ssh-shell exit.
 - Create your own JSON following the example formate from `test-simple-jobs.json`
 - Upload the file to the orchestrator node
 - Log into the orchestrator node as `ubuntu` user
@@ -61,10 +61,10 @@ See [Operating Details](docs/operating-details.md) for list of scripts, logs, an
 For testing options see [Running Tests](docs/running-tests.md)
 
 ## Generating Manifests
-The python script `replay-test/scripts/manifest/generate_manifest_from_eosnation.py` will build a manifest off the list of eos nation snapshots. A manifest may be validated for valid JSON and a contiguous block range using the [validate_manifest.py](scripts/manifest/validate_manifest.py) script
+The python script `replay-test/scripts/manifest/generate_manifest.py` will build a manifest off either the snapshots listed in S3 or the list of eos nation snapshots. By default connects to S3 to build snapshot list, and requires `aws cli` and read permissions. A manifest may be validated for valid JSON and a contiguous block range using the [validate_manifest.py](scripts/manifest/validate_manifest.py) script
 
 Redirect of stdout is recommended to separate the debug messages printed on stderr
-`python3 generate_manifest_from_eosnation.py --source-net mainnet 1> ./manifest-config.json`  
+`python3 generate_manifest.py --source-net mainnet 1> ./manifest-config.json`  
 
 ### Options
 In this release `block-space-between-slices`, `max-block-height`, and `min-block-height`.
@@ -72,6 +72,7 @@ In this release `block-space-between-slices`, `max-block-height`, and `min-block
 - `--source-net` Defaults to `mainnet`. Which chain to target. Options include mainnet, kylin, and jungle
 - `--leap-version` Defaults to `5.0.0`. Specify the version of leap to use from the builds
 - `--snapshot-version` Defaults to v6.
+- `--source-eosnation` Build manifest from eos-nation webpage of snapshots
 - `--upload-snapshots` Flag takes no values, and defaults to false. This uploads snapshots to AWS S3. Must have `aws cli` and permission to upload.
 - `--block-space-between-slices` Min number of blocks between slices, cuts down on the number of slices created
 - `--max-block-height` Limits manifest by not processing starting block ranges above value
