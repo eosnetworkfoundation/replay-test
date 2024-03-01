@@ -359,7 +359,7 @@ if __name__ == '__main__':
         help='version of leap, default 5.0.0')
     parser.add_argument('--source-eosnation', action=argparse.BooleanOptionalAction, \
         default=False, help='build snapshots from eosnation snapshots list')
-    parser.add_argument('--block-space-between-slices', type=int, default=500000, \
+    parser.add_argument('--block-space-between-slices', type=int, default=50000, \
         help='min number of blocks between slices, cuts down on the number of slices created')
     parser.add_argument('--upload-snapshots', action=argparse.BooleanOptionalAction, \
         default=False, help='upload snapshot to cloud storage, warning this takes time')
