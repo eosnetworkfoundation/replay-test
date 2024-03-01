@@ -31,6 +31,8 @@ By default the setup will spin up a webservice with [Production Run from Jan 202
 ## Replay Setup
 You can spin up as many replay nodes as you need. Replay nodes will continuously pick and process new jobs. Each replay host works on one job at a time before picking up the next job. Therefore a small number of replay hosts will process all the jobs given enough time. For example, if there are 100 replay slices configured at most 100 replay hosts, and as few as 1 replay host, may be utilized.
 
+Before running the script for the first time you must populate the correct subnet, security group, and region information into a file on the orchestration node. You will find that file `~/replay-test/scripts/replayhost/env`. Not setting the correct values will prevent the script from starting instances. 
+
 To run the replay nodes ssh into the orchestrator node and run [run-replay-instance.sh](scripts/replayhost/run-replay-instance.sh). The script takes two arguments the first is the number of replay hosts to spin up. The second argument indicates this is a dry run, and don't start up the hosts.
 ```
 ssh -i private.key -l ubuntu orchestor
