@@ -5681,16 +5681,8 @@
     },
     {
         "start_block_id": 193028281,
-        "end_block_id": 193766947,
-        "snapshot_path": "s3://chicken-dance/mainnet/snapshots/snapshot-2021-07-07-16-eos-v6-193028281.bin.zst",
-        "storage_type": "s3",
-        "expected_integrity_hash": "",
-        "leap_version": "5.0.2"
-    },
-    {
-        "start_block_id": 193766947,
         "end_block_id": 194931212,
-        "snapshot_path": "s3://chicken-dance/mainnet/snapshots/snapshot-2021-07-11-22-eos-v6-193766947.bin.zst",
+        "snapshot_path": "s3://chicken-dance/mainnet/snapshots/snapshot-2021-07-07-16-eos-v6-193028281.bin.zst",
         "storage_type": "s3",
         "expected_integrity_hash": "",
         "leap_version": "5.0.2"
