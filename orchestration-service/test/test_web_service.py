@@ -281,14 +281,14 @@ def test_post_config(setup_module):
     # all references should have the same value
     assert configAfter['expected_integrity_hash'] != configBefore['expected_integrity_hash']
 
-def test_index(setup_module):
-    """Test Home Page"""
+def test_healthcheck(setup_module):
+    """Test Healthcheck"""
     cntx = setup_module
-    html_response = requests.get(cntx['base_url'] + '/',headers=cntx['html_headers'])
+    html_response = requests.get(cntx['base_url'] + '/healthcheck',headers=cntx['html_headers'])
 
     assert html_response.status_code == 200
-    html_content = html_response.content.decode('utf-8')
-    assert len(html_content) > 10
+    content = html_response.content.decode('utf-8')
+    assert content == "OK"
 
 def test_summary(setup_module):
     """Test Summary Report Page"""
